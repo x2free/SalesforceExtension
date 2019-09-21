@@ -17,9 +17,9 @@ namespace sforceAddin
 
         private void btn_login_Click(object sender, RibbonControlEventArgs e)
         {
-            string userName = "";
-            string password = "@";
-            string secuToken = "";
+            string userName = "gtianshu@163.com";
+            string password = "2wsxXSW@";
+            string secuToken = "maBxzYhALxOHWx7gIrHSPqtO";
 
             sforce.SForceClient sfClient = new sforce.SForceClient();
             bool isSucess = sfClient.login(userName, password, secuToken);

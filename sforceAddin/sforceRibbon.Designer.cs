@@ -43,7 +43,6 @@
             // 
             // sfRibbonTab
             // 
-            this.sfRibbonTab.ControlId.ControlIdType = Microsoft.Office.Tools.Ribbon.RibbonControlIdType.Office;
             this.sfRibbonTab.Groups.Add(this.grp_login);
             this.sfRibbonTab.Label = "sforce";
             this.sfRibbonTab.Name = "sfRibbonTab";
