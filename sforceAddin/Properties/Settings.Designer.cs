@@ -22,5 +22,15 @@ namespace sforceAddin.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://login.salesforce.com/services/Soap/u/46.0")]
+        public string sforceAddin_SFDC_SforceService {
+            get {
+                return ((string)(this["sforceAddin_SFDC_SforceService"]));
+            }
+        }
     }
 }
