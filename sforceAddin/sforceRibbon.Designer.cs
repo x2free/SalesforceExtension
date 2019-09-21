@@ -37,6 +37,7 @@
             this.sfRibbonTab = this.Factory.CreateRibbonTab();
             this.grp_login = this.Factory.CreateRibbonGroup();
             this.btn_login = this.Factory.CreateRibbonButton();
+            this.btn_taskPane = this.Factory.CreateRibbonButton();
             this.sfRibbonTab.SuspendLayout();
             this.grp_login.SuspendLayout();
             this.SuspendLayout();
@@ -50,6 +51,7 @@
             // grp_login
             // 
             this.grp_login.Items.Add(this.btn_login);
+            this.grp_login.Items.Add(this.btn_taskPane);
             this.grp_login.Label = "Login";
             this.grp_login.Name = "grp_login";
             // 
@@ -58,6 +60,12 @@
             this.btn_login.Label = "login";
             this.btn_login.Name = "btn_login";
             this.btn_login.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_login_Click);
+            // 
+            // btn_taskPane
+            // 
+            this.btn_taskPane.Label = "Show/Hide Task Pane";
+            this.btn_taskPane.Name = "btn_taskPane";
+            this.btn_taskPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_taskPane_Click);
             // 
             // sforceRibbon
             // 
@@ -78,6 +86,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonTab sfRibbonTab;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_login;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_login;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_taskPane;
     }
 
     partial class ThisRibbonCollection

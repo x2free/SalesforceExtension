@@ -165,6 +165,12 @@
     </Compile>
     <Compile Include="sforce\SForceClient.cs" />
     <Compile Include="sforce\SObjectEntry.cs" />
+    <Compile Include="UI\sforceListViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\sforceListViewControl.Designer.cs">
+      <DependentUpon>sforceListViewControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Web References\SFDC\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -181,6 +187,9 @@
     </Compile>
     <EmbeddedResource Include="sforceRibbon.resx">
       <DependentUpon>sforceRibbon.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\sforceListViewControl.resx">
+      <DependentUpon>sforceListViewControl.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="Properties\Settings.settings">

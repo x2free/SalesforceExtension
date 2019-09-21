@@ -9,7 +9,7 @@ namespace sforceAddin.sforce
     /// <summary>
     /// Indicates an SObject/Custom Setting
     /// </summary>
-    class SObjectEntry
+    class SObjectEntry : IComparable
     {
         /// <summary>
         /// Label
@@ -44,6 +44,18 @@ namespace sforceAddin.sforce
             this.KeyPrefix = keyPrefix;
             this.IsCustom = isCustom;
             this.isCustomSetting = isCustomSetting;
+        }
+
+        public int CompareTo(object obj)
+        {
+            SObjectEntry sobj = obj as SObjectEntry;
+
+            if (sobj != null)
+            {
+                return string.Compare(this.Label, sobj.Label);
+            }
+
+            return -1;
         }
     }
 }

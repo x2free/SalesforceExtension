@@ -67,6 +67,8 @@ namespace sforceAddin.sforce
                 }
             }
 
+            sobjects.Sort();
+
             return sobjects;
         }
 
