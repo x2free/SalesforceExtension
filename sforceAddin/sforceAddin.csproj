@@ -171,6 +171,13 @@
     <Compile Include="UI\sforceListViewControl.Designer.cs">
       <DependentUpon>sforceListViewControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\SObjectNode.cs" />
+    <Compile Include="UI\SObjectTreeViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SObjectTreeViewControl.Designer.cs">
+      <DependentUpon>SObjectTreeViewControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Web References\SFDC\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -190,6 +197,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UI\sforceListViewControl.resx">
       <DependentUpon>sforceListViewControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SObjectTreeViewControl.resx">
+      <DependentUpon>SObjectTreeViewControl.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="Properties\Settings.settings">

@@ -49,9 +49,9 @@ namespace sforceAddin.sforce
             return false;
         }
 
-        public List<SObjectEntry> getSObjects()
+        public List<SObjectEntryBase> getSObjects()
         {
-            List<sforce.SObjectEntry> sobjects = new List<sforce.SObjectEntry>();
+            List<sforce.SObjectEntryBase> sobjects = new List<sforce.SObjectEntryBase>();
             // get SObjects
             // Make the describeGlobal() call 
             DescribeGlobalResult globalDesc = sfSvc.describeGlobal();
@@ -63,13 +63,34 @@ namespace sforceAddin.sforce
             {
                 if (sobj.queryable && sobj.createable && sobj.updateable && sobj.deletable)
                 {
-                    sobjects.Add(new SObjectEntry(sobj.name, sobj.label, sobj.labelPlural, sobj.keyPrefix, sobj.custom, sobj.customSetting));
+                    sobjects.Add(new SObjectEntry(sobj.name, sobj.label, sobj.keyPrefix, sobj.custom, sobj.customSetting, sobj.labelPlural));
                 }
             }
 
             sobjects.Sort();
 
             return sobjects;
+        }
+
+        public List<sforce.FieldEntry> describeSObject(String name)
+        {
+            List<sforce.FieldEntry> fields = new List<FieldEntry>();
+
+            DescribeSObjectResult result =  this.sfSvc.describeSObject(name);
+            if (result == null)
+            {
+                return fields;
+            }
+
+            foreach (var field in result.fields)
+            {
+                fields.Add(new FieldEntry(field.name, field.label, field.custom));
+            }
+
+            // var relation = result.childRelationships;
+            // var cr = result.childRelationships;
+
+            return fields;
         }
 
         private bool IsValidSession
