@@ -51,16 +51,16 @@ namespace sforceAddin
 
             UI.SObjectTreeViewControl treeView = new UI.SObjectTreeViewControl();
             treeView.tv_sobjs.BeginUpdate();
+
             treeView.tv_sobjs.Nodes.Add("SObjects");
             treeView.tv_sobjs.Nodes.Add("Custom Settings");
             foreach (sforce.SObjectEntry item in sobjectList)
             {
-                // TreeNode node = new UI.SObjectNode(item.Name, item.Label, sfClient);
-                // TreeNode node = new UI.SObjectNode(item, sfClient);
+                // TreeNode node = new UI.SObjectNodeBase(item.Name, item.Label, sfClient);
+                // TreeNode node = new UI.SObjectNodeBase(item, sfClient);
                 // node.Collapse();
                 // treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
 
-                
                 if (item.IsCustomSetting)
                 {
                     treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item, sfClient));
@@ -70,6 +70,7 @@ namespace sforceAddin
                     treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item,sfClient));
                 }
             }
+
             treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
             treeView.tv_sobjs.EndUpdate();
 
@@ -90,7 +91,7 @@ namespace sforceAddin
             Cursor curCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
 
-            UI.SObjectNode node = e.Node as UI.SObjectNode;
+            UI.SObjectNodeBase node = e.Node as UI.SObjectNodeBase;
 
             node.expand();
 
@@ -106,14 +107,13 @@ namespace sforceAddin
             }
 
             taskPane.Visible = !taskPane.Visible;
-            UI.sforceListViewControl lvControl = taskPane.Control as UI.sforceListViewControl;
-            if (lvControl == null)
-            {
-                lvControl.AutoSize = true;
-                // btn_taskPane.Enabled = false;
-                return;
-            }
-
+            //UI.sforceListViewControl lvControl = taskPane.Control as UI.sforceListViewControl;
+            //if (lvControl == null)
+            //{
+            //    lvControl.AutoSize = true;
+            //    // btn_taskPane.Enabled = false;
+            //    return;
+            //}
         }
     }
 }

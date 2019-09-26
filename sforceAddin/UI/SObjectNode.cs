@@ -4,34 +4,35 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using sforceAddin.sforce;
 
 namespace sforceAddin.UI
 {
-    class SObjectNode : TreeNode
+    abstract class SObjectNodeBase : TreeNode
     {
         /// <summary>
         /// SForceClient object, to integration with Salesforce
         /// </summary>
-        private sforce.SForceClient sfClient;
+        protected sforce.SForceClient sfClient;
         /// <summary>
         /// Sub nodes, eg, fields of an SOject
         /// </summary>
-        /// private List<SObjectNode> subNodes;
+        /// private List<SObjectNodeBase> subNodes;
 
         /// <summary>
         /// SObject binding to this node
         /// </summary>
-        private sforce.SObjectEntryBase sobjEntry;
+        protected sforce.SObjectEntryBase sobjEntry;
 
-        public SObjectNode(String name, String label, sforce.SForceClient sfClient)
-        {
-            this.Name = name;
-            this.Text = label;
+        //public SObjectNodeBase(String name, String label, sforce.SForceClient sfClient)
+        //{
+        //    this.Name = name;
+        //    this.Text = label;
 
-            this.sfClient = sfClient;
-        }
+        //    this.sfClient = sfClient;
+        //}
 
-        public SObjectNode(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
+        public SObjectNodeBase(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
         {
             this.Name = sobj.Name;
             this.Text = sobj.Label;
@@ -46,13 +47,41 @@ namespace sforceAddin.UI
         /// <summary>
         /// Determine if <sobjeEntry> has sub entrys
         /// </summary>
-        public void expand()
+        abstract public void expand();
+        
+    }
+
+    class SObjectNode : SObjectNodeBase
+    {
+        public SObjectNode(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
+            : base(sobj, sfClient) { }
+
+
+        public override void expand()
         {
+            if (this.Nodes != null && this.Nodes.Count > 0)
+            {
+                return;
+            }
+
             var nodes = this.sfClient.describeSObject(this.Name);
             foreach (var item in nodes)
             {
-                this.Nodes.Add(new SObjectNode(item, this.sfClient));
+                this.Nodes.Add(new FieldNode(item, this.sfClient));
             }
+        }
+    }
+
+    class FieldNode : SObjectNodeBase
+    {
+        public FieldNode(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
+            : base(sobj, sfClient)
+        {
+        }
+
+        public override void expand()
+        {
+            
         }
     }
 }
