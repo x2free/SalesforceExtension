@@ -13,7 +13,7 @@ namespace sforceAddin.UI
         /// <summary>
         /// SForceClient object, to integration with Salesforce
         /// </summary>
-        protected sforce.SForceClient sfClient;
+        // protected sforce.SForceClient sfClient;
         /// <summary>
         /// Sub nodes, eg, fields of an SOject
         /// </summary>
@@ -32,16 +32,18 @@ namespace sforceAddin.UI
         //    this.sfClient = sfClient;
         //}
 
-        public SObjectNodeBase(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
+        public SObjectNodeBase(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/)
         {
             this.Name = sobj.Name;
             this.Text = sobj.Label;
 
-            this.sfClient = sfClient;
+            // this.sfClient = sfClient;
 
-            if (sobj is sforce.SObjectEntry) {
+            //if (sobj is sforce.SObjectEntry) {
 
-            }
+            //}
+
+            this.sobjEntry = sobj;
         }
 
         /// <summary>
@@ -53,8 +55,8 @@ namespace sforceAddin.UI
 
     class SObjectNode : SObjectNodeBase
     {
-        public SObjectNode(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
-            : base(sobj, sfClient) { }
+        public SObjectNode(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/)
+            : base(sobj/*, sfClient*/) { }
 
 
         public override void expand()
@@ -64,24 +66,25 @@ namespace sforceAddin.UI
                 return;
             }
 
-            var nodes = this.sfClient.describeSObject(this.Name);
+            var nodes = sobjEntry.getChildren();
             foreach (var item in nodes)
             {
-                this.Nodes.Add(new FieldNode(item, this.sfClient));
+                this.Nodes.Add(new FieldNode(item));
             }
         }
     }
 
     class FieldNode : SObjectNodeBase
     {
-        public FieldNode(sforce.SObjectEntryBase sobj, sforce.SForceClient sfClient)
-            : base(sobj, sfClient)
+        public FieldNode(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/)
+            : base(sobj/*, sfClient*/)
         {
         }
 
         public override void expand()
         {
-            
+            // Microsoft.Office.Interop.Excel.Worksheet sheet;
+
         }
     }
 }

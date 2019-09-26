@@ -63,11 +63,11 @@ namespace sforceAddin
 
                 if (item.IsCustomSetting)
                 {
-                    treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item, sfClient));
+                    treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item));
                 }
                 else
                 {
-                    treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item,sfClient));
+                    treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item));
                 }
             }
 
@@ -93,7 +93,10 @@ namespace sforceAddin
 
             UI.SObjectNodeBase node = e.Node as UI.SObjectNodeBase;
 
-            node.expand();
+            if (node != null) //eg, root node
+            {
+                node.expand();
+            }
 
             Cursor.Current = curCursor;
         }

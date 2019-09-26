@@ -63,7 +63,7 @@ namespace sforceAddin.sforce
             {
                 if (sobj.queryable && sobj.createable && sobj.updateable && sobj.deletable)
                 {
-                    sobjects.Add(new SObjectEntry(sobj.name, sobj.label, sobj.keyPrefix, sobj.custom, sobj.customSetting, sobj.labelPlural));
+                    sobjects.Add(new SObjectEntry(sobj.name, sobj.label, sobj.keyPrefix, sobj.custom, sobj.customSetting, this, sobj.labelPlural));
                 }
             }
 
@@ -72,11 +72,11 @@ namespace sforceAddin.sforce
             return sobjects;
         }
 
-        public List<sforce.FieldEntry> describeSObject(String name)
+        public List<sforce.SObjectEntryBase> describeSObject(SObjectEntryBase sobj)
         {
-            List<sforce.FieldEntry> fields = new List<FieldEntry>();
+            List<sforce.SObjectEntryBase> fields = new List<SObjectEntryBase>();
 
-            DescribeSObjectResult result =  this.sfSvc.describeSObject(name);
+            DescribeSObjectResult result =  this.sfSvc.describeSObject(sobj.Name);
             if (result == null)
             {
                 return fields;
@@ -84,7 +84,7 @@ namespace sforceAddin.sforce
 
             foreach (var field in result.fields)
             {
-                fields.Add(new FieldEntry(field.name, field.label, field.custom));
+                fields.Add(new FieldEntry(field.name, field.label, field.custom, this, sobj));
             }
 
             // var relation = result.childRelationships;

@@ -35,7 +35,9 @@ namespace sforceAddin.sforce
         /// </summary>
         public List<SObjectEntryBase> SubSObjects;
 
-        public SObjectEntryBase(String name, String label, bool isCustom)
+        private SForceClient sfClient;
+
+        public SObjectEntryBase(String name, String label, bool isCustom, SForceClient sfClient)
         {
             this.Name = name;
             this.Label = label;
@@ -43,6 +45,7 @@ namespace sforceAddin.sforce
             // this.KeyPrefix = keyPrefix;
             this.IsCustom = isCustom;
             // this.isCustomSetting = isCustomSetting;
+            this.sfClient = sfClient;
         }
 
         public int CompareTo(object obj)
@@ -56,6 +59,11 @@ namespace sforceAddin.sforce
             }
 
             return -1;
+        }
+
+        public List<SObjectEntryBase> getChildren()
+        {
+            return this.sfClient.describeSObject(this);
         }
     }
 
@@ -76,8 +84,8 @@ namespace sforceAddin.sforce
         /// </summary>
         public String LabelPlural { get; private set; }
 
-        public SObjectEntry(String name, String label, String keyPrefix, bool isCustom, bool isCustomSetting, String pluralLabel = null)
-            : base(name, label, isCustom)
+        public SObjectEntry(String name, String label, String keyPrefix, bool isCustom, bool isCustomSetting, SForceClient sfClient, String pluralLabel = null)
+            : base(name, label, isCustom, sfClient)
         {
             this.IsCustomSetting = isCustomSetting;
             this.KeyPrefix = keyPrefix;
@@ -89,10 +97,15 @@ namespace sforceAddin.sforce
 
     class FieldEntry : SObjectEntryBase
     {
-        public FieldEntry(String name, String label, bool isCustom)
-            : base(name, label, isCustom)
-        {
+        /// <summary>
+        /// To indicate which table/custom setting this field belongs to
+        /// </summary>
+        private SObjectEntryBase parent;
 
+        public FieldEntry(String name, String label, bool isCustom, SForceClient sfClient, SObjectEntryBase parent)
+            : base(name, label, isCustom, sfClient)
+        {
+            this.parent = parent;
         }
     }
 }
