@@ -35,25 +35,30 @@
         private void InitializeComponent()
         {
             this.sfRibbonTab = this.Factory.CreateRibbonTab();
-            this.grp_login = this.Factory.CreateRibbonGroup();
+            this.grp_auth = this.Factory.CreateRibbonGroup();
             this.btn_login = this.Factory.CreateRibbonButton();
             this.btn_taskPane = this.Factory.CreateRibbonButton();
+            this.grp_data = this.Factory.CreateRibbonGroup();
+            this.btn_load = this.Factory.CreateRibbonButton();
+            this.btn_upsert = this.Factory.CreateRibbonButton();
             this.sfRibbonTab.SuspendLayout();
-            this.grp_login.SuspendLayout();
+            this.grp_auth.SuspendLayout();
+            this.grp_data.SuspendLayout();
             this.SuspendLayout();
             // 
             // sfRibbonTab
             // 
-            this.sfRibbonTab.Groups.Add(this.grp_login);
+            this.sfRibbonTab.Groups.Add(this.grp_auth);
+            this.sfRibbonTab.Groups.Add(this.grp_data);
             this.sfRibbonTab.Label = "sforce";
             this.sfRibbonTab.Name = "sfRibbonTab";
             // 
-            // grp_login
+            // grp_auth
             // 
-            this.grp_login.Items.Add(this.btn_login);
-            this.grp_login.Items.Add(this.btn_taskPane);
-            this.grp_login.Label = "Login";
-            this.grp_login.Name = "grp_login";
+            this.grp_auth.Items.Add(this.btn_login);
+            this.grp_auth.Items.Add(this.btn_taskPane);
+            this.grp_auth.Label = "Auth";
+            this.grp_auth.Name = "grp_auth";
             // 
             // btn_login
             // 
@@ -67,6 +72,24 @@
             this.btn_taskPane.Name = "btn_taskPane";
             this.btn_taskPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_taskPane_Click);
             // 
+            // grp_data
+            // 
+            this.grp_data.Items.Add(this.btn_load);
+            this.grp_data.Items.Add(this.btn_upsert);
+            this.grp_data.Label = "Data";
+            this.grp_data.Name = "grp_data";
+            // 
+            // btn_load
+            // 
+            this.btn_load.Label = "Load Data";
+            this.btn_load.Name = "btn_load";
+            this.btn_load.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_load_Click);
+            // 
+            // btn_upsert
+            // 
+            this.btn_upsert.Label = "Upsert Data";
+            this.btn_upsert.Name = "btn_upsert";
+            // 
             // sforceRibbon
             // 
             this.Name = "sforceRibbon";
@@ -75,8 +98,10 @@
             this.Load += new Microsoft.Office.Tools.Ribbon.RibbonUIEventHandler(this.sforceRibbon_Load);
             this.sfRibbonTab.ResumeLayout(false);
             this.sfRibbonTab.PerformLayout();
-            this.grp_login.ResumeLayout(false);
-            this.grp_login.PerformLayout();
+            this.grp_auth.ResumeLayout(false);
+            this.grp_auth.PerformLayout();
+            this.grp_data.ResumeLayout(false);
+            this.grp_data.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -84,9 +109,12 @@
         #endregion
 
         internal Microsoft.Office.Tools.Ribbon.RibbonTab sfRibbonTab;
-        internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_login;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_auth;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_login;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_taskPane;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_data;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_load;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_upsert;
     }
 
     partial class ThisRibbonCollection

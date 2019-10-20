@@ -13,6 +13,7 @@ namespace sforceAddin
     public partial class sforceRibbon
     {
         CustomTaskPane taskPane;
+        sforce.SForceClient sfClient;
 
         private void sforceRibbon_Load(object sender, RibbonUIEventArgs e)
         {
@@ -28,7 +29,7 @@ namespace sforceAddin
             string password = "";
             string secuToken = "";
 
-            sforce.SForceClient sfClient = new sforce.SForceClient();
+            sfClient = new sforce.SForceClient();
             bool isSucess = sfClient.login(userName, password, secuToken);
 
             if (!isSucess)
@@ -118,6 +119,41 @@ namespace sforceAddin
             //    // btn_taskPane.Enabled = false;
             //    return;
             //}
+        }
+
+        private void btn_load_Click(object sender, RibbonControlEventArgs e)
+        {
+            Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
+            Microsoft.Office.Interop.Excel.ListObject listObj = null;
+            foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
+            {
+                if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    listObj = obj;
+                }
+            }
+
+            if (listObj == null)
+            {
+                return;
+            }
+
+            // string tableName = listObj.DisplayName;
+            string tableName = listObj.Name;
+            StringBuilder sb = new StringBuilder();
+
+            //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
+            //{
+            //    sb.AppendFormat("{0},", col.Name);
+            //}
+
+            foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+            {
+                sb.AppendFormat("{0},", headerCell.Name.Name);
+            }
+
+            sb.Remove(sb.Length - 1, 1);
+            string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
         }
     }
 }

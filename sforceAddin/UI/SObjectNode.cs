@@ -89,7 +89,8 @@ namespace sforceAddin.UI
 
         public override void dbClick()
         {
-            string tableName = parent.Text;
+            // string tableName = parent.Text;
+            string tableName = parent.Name;
 
             Microsoft.Office.Interop.Excel.Worksheet worksheet = null;
             // Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
@@ -171,26 +172,29 @@ namespace sforceAddin.UI
             {
                 // Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells.CurrentRegion;
                 Microsoft.Office.Interop.Excel.Range curRange = Globals.ThisAddIn.Application.ActiveCell;
-                curRange.Value = this.Name;
+                curRange.Name = this.Name;
+                // curRange.Value = this.Name;
                 curRange.Value2 = this.Text;
 
                 listObj = worksheet.ListObjects.Add(Microsoft.Office.Interop.Excel.XlListObjectSourceType.xlSrcRange, curRange/*worksheet.UsedRange*/,
                     Type.Missing, Microsoft.Office.Interop.Excel.XlYesNoGuess.xlYes);
 
+                // listObj.DisplayName = parent.Name;
                 listObj.Name = tableName;
                 listObj.TableStyle = "TableStyleMedium23";
             }
             else
             {
                 Microsoft.Office.Interop.Excel.ListColumn column = listObj.ListColumns.Add();
-                column.Name = this.Name;
+                // column.Name = this.Name;
                 // Microsoft.Office.Interop.Excel.Range r = column.Range; // this won't get the header, it's 2nd row
                 //r.Value = this.Name;
                 // r.Value2 = this.Text;
 
                 // field header
                 Microsoft.Office.Interop.Excel.Range headerRange = listObj.HeaderRowRange.Cells[1, listObj.ListColumns.Count];
-                headerRange.Value = this.Name;
+                headerRange.Name = this.Name;
+                // headerRange.Value = this.Name;
                 headerRange.Value2 = this.Text;
 
                 //Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells[1, listObj.ListColumns.Count];
