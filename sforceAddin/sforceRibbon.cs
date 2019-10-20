@@ -21,7 +21,7 @@ namespace sforceAddin
 
         private void btn_login_Click(object sender, RibbonControlEventArgs e)
         {
-            Cursor currentCursor = Cursor.Current;
+            Cursor oldCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
 
             string userName = "";
@@ -33,6 +33,7 @@ namespace sforceAddin
 
             if (!isSucess)
             {
+                Cursor.Current = oldCursor;
                 return;
             }
 
@@ -63,11 +64,11 @@ namespace sforceAddin
 
                 if (item.IsCustomSetting)
                 {
-                    treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item));
+                    treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item, null));
                 }
                 else
                 {
-                    treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item));
+                    treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item, null));
                 }
             }
 
@@ -81,7 +82,7 @@ namespace sforceAddin
 
             // taskPane.VisibleChanged += TaskPane_VisibleChanged;
 
-            Cursor.Current = currentCursor;
+            Cursor.Current = oldCursor;
 
             btn_taskPane.Enabled = true;
         }
@@ -95,7 +96,7 @@ namespace sforceAddin
 
             if (node != null) //eg, root node
             {
-                node.expand();
+                node.dbClick();
             }
 
             Cursor.Current = curCursor;
