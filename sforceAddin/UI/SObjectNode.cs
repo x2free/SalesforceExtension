@@ -89,7 +89,7 @@ namespace sforceAddin.UI
 
         public override void dbClick()
         {
-            string tableName = parent.Name;
+            string tableName = parent.Text;
 
             Microsoft.Office.Interop.Excel.Worksheet worksheet = null;
             // Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
@@ -169,7 +169,8 @@ namespace sforceAddin.UI
 
             if (listObj == null)
             {
-                Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells.CurrentRegion;
+                // Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells.CurrentRegion;
+                Microsoft.Office.Interop.Excel.Range curRange = Globals.ThisAddIn.Application.ActiveCell;
                 curRange.Value = this.Name;
                 curRange.Value2 = this.Text;
 
@@ -183,7 +184,20 @@ namespace sforceAddin.UI
             {
                 Microsoft.Office.Interop.Excel.ListColumn column = listObj.ListColumns.Add();
                 column.Name = this.Name;
-                Microsoft.Office.Interop.Excel.Range r = column.Range;
+                // Microsoft.Office.Interop.Excel.Range r = column.Range; // this won't get the header, it's 2nd row
+                //r.Value = this.Name;
+                // r.Value2 = this.Text;
+
+                // field header
+                Microsoft.Office.Interop.Excel.Range headerRange = listObj.HeaderRowRange.Cells[1, listObj.ListColumns.Count];
+                headerRange.Value = this.Name;
+                headerRange.Value2 = this.Text;
+
+                //Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells[1, listObj.ListColumns.Count];
+                //curRange.Value = this.Name;
+                //curRange.Value2 = this.Text;
+
+                //listObj.ListColumns.Add(curRange);
             }
 
             // remove this node once add to sheet
