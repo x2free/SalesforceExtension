@@ -124,6 +124,8 @@ namespace sforceAddin
         private void btn_load_Click(object sender, RibbonControlEventArgs e)
         {
             Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
+
+
             Microsoft.Office.Interop.Excel.ListObject listObj = null;
             foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
             {
@@ -154,6 +156,16 @@ namespace sforceAddin
 
             sb.Remove(sb.Length - 1, 1);
             string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
+
+            System.Data.DataTable dt = sfClient.execQuery(queryStr);
+
+            // Microsoft.Office.Tools.Excel.ApplicationFactory factory = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
+            // Microsoft.Office.Tools.Excel.Worksheet sheet2 = (Microsoft.Office.Tools.Excel.Worksheet)Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
+            // sheet2.lis
+
+            Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
+            hostListObject.SetDataBinding(dt);
+            hostListObject.RefreshDataRows();
         }
     }
 }

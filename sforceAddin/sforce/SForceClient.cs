@@ -93,6 +93,85 @@ namespace sforceAddin.sforce
             return fields;
         }
 
+        public System.Data.DataTable execQuery(string query)
+        {
+            QueryResult ret = this.sfSvc.query(query);
+
+            System.Data.DataTable dt = new System.Data.DataTable("Table01");
+
+            if (ret != null && ret.records.Count<sObject>() > 0)
+            {
+                sObject rec = ret.records.First<sObject>();
+                // create column info based on 1st row
+                foreach (System.Xml.XmlElement col in rec.Any)
+                {
+                    if (col.FirstChild != null)
+                    {
+                        switch (col.FirstChild.NodeType)
+                        {
+                            case System.Xml.XmlNodeType.None:
+                                break;
+                            case System.Xml.XmlNodeType.Element:
+                                break;
+                            case System.Xml.XmlNodeType.Attribute:
+                                break;
+                            case System.Xml.XmlNodeType.Text:
+                                dt.Columns.Add(col.LocalName, typeof(string));
+                                break;
+                            case System.Xml.XmlNodeType.CDATA:
+                                break;
+                            case System.Xml.XmlNodeType.EntityReference:
+                                break;
+                            case System.Xml.XmlNodeType.Entity:
+                                break;
+                            case System.Xml.XmlNodeType.ProcessingInstruction:
+                                break;
+                            case System.Xml.XmlNodeType.Comment:
+                                break;
+                            case System.Xml.XmlNodeType.Document:
+                                break;
+                            case System.Xml.XmlNodeType.DocumentType:
+                                break;
+                            case System.Xml.XmlNodeType.DocumentFragment:
+                                break;
+                            case System.Xml.XmlNodeType.Notation:
+                                break;
+                            case System.Xml.XmlNodeType.Whitespace:
+                                break;
+                            case System.Xml.XmlNodeType.SignificantWhitespace:
+                                break;
+                            case System.Xml.XmlNodeType.EndElement:
+                                break;
+                            case System.Xml.XmlNodeType.EndEntity:
+                                break;
+                            case System.Xml.XmlNodeType.XmlDeclaration:
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        dt.Columns.Add(col.LocalName, typeof(string));
+                    }
+                }
+            }
+
+            foreach (sObject rec in ret.records)
+            {
+                System.Data.DataRow dr = dt.NewRow();
+
+                foreach (System.Xml.XmlElement col in rec.Any)
+                {
+                    dr[col.LocalName] = col.InnerText;
+                }
+
+                dt.Rows.Add(dr);
+            }
+
+            return dt;
+        }
+
         private bool IsValidSession
         {
             get
