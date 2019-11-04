@@ -14,6 +14,8 @@ namespace sforceAddin
     {
         CustomTaskPane taskPane;
         sforce.SForceClient sfClient;
+        // System.Data.DataTable dt;
+        System.Data.DataSet ds = new System.Data.DataSet();
 
         private void sforceRibbon_Load(object sender, RibbonUIEventArgs e)
         {
@@ -149,15 +151,49 @@ namespace sforceAddin
             //    sb.AppendFormat("{0},", col.Name);
             //}
 
-            foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+            //foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+            //{
+            //    sb.AppendFormat("{0},", headerCell.Name.Name);
+            //}
+
+            // get text instead of API names
+            //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
+            //{
+            //    sb.AppendFormat("{0},", col.Name);
+            //}
+
+            //foreach (Microsoft.Office.Interop.Excel.Name item in sheet.Names)
+            //{
+
+            //}
+
+            foreach (Microsoft.Office.Interop.Excel.Name item in Globals.ThisAddIn.Application.Names)
             {
-                sb.AppendFormat("{0},", headerCell.Name.Name);
+                if (item.Name != null && item.Name.StartsWith(listObj.Name))
+                {
+                    sb.AppendFormat("{0},", item.Name.Substring(listObj.Name.Length + 1));
+                }
             }
+
+            //foreach (Microsoft.Office.Interop.Excel.Range cell in listObj.HeaderRowRange)
+            //{
+            //    Microsoft.Office.Interop.Excel.Name name = (Microsoft.Office.Interop.Excel.Name)cell.Name;
+            //    sb.AppendFormat("{0},", name.Name.Substring(listObj.Name.Length + 1));
+            //}
+
 
             sb.Remove(sb.Length - 1, 1);
             string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
 
-            System.Data.DataTable dt = sfClient.execQuery(queryStr);
+            System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[tableName];
+            bool isTableExist = dt != null;
+            dt = sfClient.execQuery(queryStr, tableName, dt);
+            dt.AcceptChanges();
+
+            if (!isTableExist)
+            {
+                ds.Tables.Add(dt);
+            }
 
             // Microsoft.Office.Tools.Excel.ApplicationFactory factory = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
             // Microsoft.Office.Tools.Excel.Worksheet sheet2 = (Microsoft.Office.Tools.Excel.Worksheet)Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
@@ -166,6 +202,21 @@ namespace sforceAddin
             Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
             hostListObject.SetDataBinding(dt);
             hostListObject.RefreshDataRows();
+        }
+
+        private void btn_upsert_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
+
+            System.Data.DataTable updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
+            System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
+            System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
+
+            dt.AcceptChanges();
+
+            updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
+            deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
+            addedTable = dt.GetChanges(System.Data.DataRowState.Added);
         }
     }
 }

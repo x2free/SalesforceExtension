@@ -93,11 +93,23 @@ namespace sforceAddin.sforce
             return fields;
         }
 
-        public System.Data.DataTable execQuery(string query)
+        public System.Data.DataTable execQuery(string query, string tableName, System.Data.DataTable dt)
         {
             QueryResult ret = this.sfSvc.query(query);
 
-            System.Data.DataTable dt = new System.Data.DataTable("Table01");
+            if (dt == null)
+            {
+                dt = new System.Data.DataTable(tableName);
+
+                dt.ColumnChanged += Dt_ColumnChanged;
+                // dt.ColumnChanging += Dt_ColumnChanging;
+                dt.RowChanged += Dt_RowChanged;
+                dt.RowDeleted += Dt_RowDeleted;
+            }
+
+
+            // In case of that add/remove columns when reload
+            dt.Columns.Clear();
 
             if (ret != null && ret.records.Count<sObject>() > 0)
             {
@@ -157,6 +169,9 @@ namespace sforceAddin.sforce
                 }
             }
 
+            // clear rows then re-bind them.
+            dt.Rows.Clear();
+
             foreach (sObject rec in ret.records)
             {
                 System.Data.DataRow dr = dt.NewRow();
@@ -170,6 +185,106 @@ namespace sforceAddin.sforce
             }
 
             return dt;
+        }
+
+        public void doUpdate(System.Data.DataTable table)
+        {
+            System.Data.DataTable updatedTable = table.GetChanges(System.Data.DataRowState.Modified);
+            System.Data.DataTable deletedTable = table.GetChanges(System.Data.DataRowState.Deleted);
+            System.Data.DataTable addedTable = table.GetChanges(System.Data.DataRowState.Added);
+
+            List<sObject> upsertList = new List<sObject>();
+
+            // refer to https://developer.salesforce.com/forums/?id=906F00000008sJ3IAI
+            // to create objects
+            foreach (var item in updatedTable.Rows)
+            {
+                sObject obj = new sObject();
+            }
+
+            /*
+             
+col
+{Element, Name="sf:Id"}
+    Attributes: {System.Xml.XmlAttributeCollection}
+    BaseURI: ""
+    ChildNodes: {System.Xml.XmlChildNodes}
+    FirstChild: {Text, Value="0016F00002cseUHQAY"}
+    HasAttributes: false
+    HasChildNodes: true
+    InnerText: "0016F00002cseUHQAY"
+    InnerXml: "0016F00002cseUHQAY"
+    IsEmpty: false
+    IsReadOnly: false
+    LastChild: {Text, Value="0016F00002cseUHQAY"}
+    LocalName: "Id"
+    Name: "sf:Id"
+    NamespaceURI: "urn:sobject.partner.soap.sforce.com"
+    NextSibling: null
+    NodeType: Element
+    OuterXml: "<sf:Id xmlns:sf=\"urn:sobject.partner.soap.sforce.com\">0016F00002cseUHQAY</sf:Id>"
+    OwnerDocument: {Document}
+    ParentNode: null
+    Prefix: "sf"
+    PreviousSibling: null
+    PreviousText: null
+    SchemaInfo: {System.Xml.XmlName}
+    Value: null
+    Results View: Expanding the Results View will enumerate the IEnumerable
+col.ChildNodes
+{System.Xml.XmlChildNodes}
+    Count: 1
+    Results View: Expanding the Results View will enumerate the IEnumerable
+col.ChildNodes[0]
+{Text, Value="0016F00002cseUHQAY"}
+    Attributes: null
+    BaseURI: ""
+    ChildNodes: {System.Xml.XmlChildNodes}
+    Data: "0016F00002cseUHQAY"
+    FirstChild: null
+    HasChildNodes: false
+    InnerText: "0016F00002cseUHQAY"
+    InnerXml: ""
+    IsReadOnly: false
+    LastChild: null
+    Length: 18
+    LocalName: "#text"
+    Name: "#text"
+    NamespaceURI: ""
+    NextSibling: null
+    NodeType: Text
+    OuterXml: "0016F00002cseUHQAY"
+    OwnerDocument: {Document}
+    ParentNode: {Element, Name="sf:Id"}
+    Prefix: ""
+    PreviousSibling: null
+    PreviousText: null
+    SchemaInfo: {System.Xml.Schema.XmlSchemaInfo}
+    Value: "0016F00002cseUHQAY"
+    Results View: Expanding the Results View will enumerate the IEnumerable
+
+             
+             */
+        }
+
+        private void Dt_RowDeleted(object sender, System.Data.DataRowChangeEventArgs e)
+        {
+
+        }
+
+        private void Dt_RowChanged(object sender, System.Data.DataRowChangeEventArgs e)
+        {
+
+        }
+
+        private void Dt_ColumnChanging(object sender, System.Data.DataColumnChangeEventArgs e)
+        {
+
+        }
+
+        private void Dt_ColumnChanged(object sender, System.Data.DataColumnChangeEventArgs e)
+        {
+
         }
 
         private bool IsValidSession

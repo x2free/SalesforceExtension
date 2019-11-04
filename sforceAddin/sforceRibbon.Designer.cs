@@ -89,6 +89,7 @@
             // 
             this.btn_upsert.Label = "Upsert Data";
             this.btn_upsert.Name = "btn_upsert";
+            this.btn_upsert.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_upsert_Click);
             // 
             // sforceRibbon
             // 

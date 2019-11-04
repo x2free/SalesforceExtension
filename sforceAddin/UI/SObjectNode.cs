@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using sforceAddin.sforce;
+using Interop = Microsoft.Office.Interop.Excel;
+using Tools = Microsoft.Office.Tools.Excel;
 
 namespace sforceAddin.UI
 {
@@ -92,31 +94,34 @@ namespace sforceAddin.UI
             // string tableName = parent.Text;
             string tableName = parent.Name;
 
-            Microsoft.Office.Interop.Excel.Worksheet worksheet = null;
+            Microsoft.Office.Interop.Excel.Worksheet iWorksheet = null;
             // Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
             // Microsoft.Office.Interop.Excel.Worksheets sheets = (Microsoft.Office.Interop.Excel.Worksheets)excelApp.Worksheets;
 
             //Microsoft.Office.Interop.Excel.Application excelApp = Globals.ThisAddIn.Application;
             //Microsoft.Office.Interop.Excel.Workbook wb = excelApp.ActiveWorkbook;
-            Microsoft.Office.Interop.Excel.Workbook activeWorkbook = Globals.ThisAddIn.Application.ActiveWorkbook;
-            Microsoft.Office.Interop.Excel.Sheets sheets = activeWorkbook.Sheets;
+            Interop.Workbook activeWorkbook = Globals.ThisAddIn.Application.ActiveWorkbook;
+            Interop.Sheets sheets = activeWorkbook.Sheets;
 
             foreach (Microsoft.Office.Interop.Excel.Worksheet sheet in sheets)
             {
                 if (String.Equals(tableName, sheet.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    worksheet = sheet;
+                    iWorksheet = sheet;
                     break;
                 }
             }
 
-            if (worksheet == null)
+            if (iWorksheet == null)
             {
-                worksheet = activeWorkbook.Sheets.Add();
-                worksheet.Name = tableName;
+                iWorksheet = activeWorkbook.Sheets.Add();
+                iWorksheet.Name = tableName;
             }
 
-            worksheet.Activate();
+            iWorksheet.Activate();
+
+
+            Tools.Worksheet worksheet = Globals.Factory.GetVstoObject(iWorksheet);
 
             //Microsoft.Office.Interop.Excel.QueryTable workTable = null;
             //var tables = worksheet.QueryTables;
@@ -159,7 +164,7 @@ namespace sforceAddin.UI
 
             Microsoft.Office.Interop.Excel.ListObject listObj = null;
 
-            foreach (Microsoft.Office.Interop.Excel.ListObject item in worksheet.ListObjects)
+            foreach (Microsoft.Office.Interop.Excel.ListObject item in iWorksheet.ListObjects)
             {
                 if (String.Equals(tableName, item.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -170,30 +175,43 @@ namespace sforceAddin.UI
 
             if (listObj == null)
             {
-                // Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells.CurrentRegion;
+                //// Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells.CurrentRegion;
                 Microsoft.Office.Interop.Excel.Range curRange = Globals.ThisAddIn.Application.ActiveCell;
-                curRange.Name = this.Name;
+                // curRange.Name = this.Name;
+                curRange.Name = string.Format("{0}.{1}", parent.Name, this.Name);
                 // curRange.Value = this.Name;
                 curRange.Value2 = this.Text;
 
-                listObj = worksheet.ListObjects.Add(Microsoft.Office.Interop.Excel.XlListObjectSourceType.xlSrcRange, curRange/*worksheet.UsedRange*/,
+                listObj = iWorksheet.ListObjects.Add(Microsoft.Office.Interop.Excel.XlListObjectSourceType.xlSrcRange, curRange/*worksheet.UsedRange*/,
                     Type.Missing, Microsoft.Office.Interop.Excel.XlYesNoGuess.xlYes);
 
                 // listObj.DisplayName = parent.Name;
                 listObj.Name = tableName;
                 listObj.TableStyle = "TableStyleMedium23";
+
+                //listObj = worksheet.Controls.AddListObject(Globals.ThisAddIn.Application.ActiveCell, parent.Name).InnerObject;
+                //// field header
+                //Microsoft.Office.Interop.Excel.Range headerRange = listObj.HeaderRowRange.Cells[1, listObj.ListColumns.Count];
+                //// headerRange.Name = this.Name;
+                //headerRange.Name = string.Format("{0}.{1}", parent.Name, this.Name);
+                //// headerRange.Value = this.Name;
+                //headerRange.Value2 = this.Text;
+
             }
             else
             {
                 Microsoft.Office.Interop.Excel.ListColumn column = listObj.ListColumns.Add();
-                // column.Name = this.Name;
-                // Microsoft.Office.Interop.Excel.Range r = column.Range; // this won't get the header, it's 2nd row
+                int cnt = listObj.ListColumns.Count;
+                // column.Name = this.Name; // throwing exception if loaded data then add column again.
+                column.Name = string.Format("{0}_{1}", parent.Name, this.Name);
+                // Microsoft.Office.Interop.Excel.Range r = column.Range; // this won't get the header, it gets 2nd row
                 //r.Value = this.Name;
                 // r.Value2 = this.Text;
 
                 // field header
                 Microsoft.Office.Interop.Excel.Range headerRange = listObj.HeaderRowRange.Cells[1, listObj.ListColumns.Count];
-                headerRange.Name = this.Name;
+                // headerRange.Name = this.Name;
+                headerRange.Name = string.Format("{0}.{1}", parent.Name, this.Name);
                 // headerRange.Value = this.Name;
                 headerRange.Value2 = this.Text;
 
@@ -205,7 +223,7 @@ namespace sforceAddin.UI
             }
 
             // remove this node once add to sheet
-            // parent.Nodes.Remove(this);
+            parent.Nodes.Remove(this);
         }
     }
 }
