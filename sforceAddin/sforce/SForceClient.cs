@@ -16,6 +16,18 @@ namespace sforceAddin.sforce
 
         public List<SObjectEntry> sobjectList;
 
+        public bool login(sforce.SFSession sfSession)
+        {
+            sfSvc = new SFDC.SforceService();
+            sfSvc.SessionHeaderValue = new SessionHeader();
+            sfSvc.SessionHeaderValue.sessionId = sfSession.SessionId;
+            // sfSvc.Url = sfSession.InstanceUrl;
+            sfSvc.Url = sfSession.SoapPartnerUrl;
+            this.serverUrl = sfSession.SoapPartnerUrl;
+
+            return true;
+        }
+
         public bool login(String userName, String password, String securityToken)
         {
             // To enable SSL/TLS
@@ -44,9 +56,11 @@ namespace sforceAddin.sforce
             }
             catch (Exception ex)
             {
+                Console.Write(ex.ToString());
+                throw ex;
             }
 
-            return false;
+            //return false;
         }
 
         public List<SObjectEntryBase> getSObjects()
@@ -97,6 +111,11 @@ namespace sforceAddin.sforce
         {
             QueryResult ret = this.sfSvc.query(query);
 
+            if (ret == null || ret.records == null)
+            {
+                throw new Exception("No data loaded!");
+            }
+
             if (dt == null)
             {
                 dt = new System.Data.DataTable(tableName);
@@ -105,69 +124,70 @@ namespace sforceAddin.sforce
                 // dt.ColumnChanging += Dt_ColumnChanging;
                 dt.RowChanged += Dt_RowChanged;
                 dt.RowDeleted += Dt_RowDeleted;
+
+                if (ret.records.Count<sObject>() > 0)
+                {
+                    sObject rec = ret.records.First<sObject>();
+                    // create column info based on 1st row
+                    foreach (System.Xml.XmlElement col in rec.Any)
+                    {
+                        string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                        if (col.FirstChild != null)
+                        {
+                            switch (col.FirstChild.NodeType)
+                            {
+                                case System.Xml.XmlNodeType.None:
+                                    break;
+                                case System.Xml.XmlNodeType.Element:
+                                    break;
+                                case System.Xml.XmlNodeType.Attribute:
+                                    break;
+                                case System.Xml.XmlNodeType.Text:
+                                    dt.Columns.Add(fieldName, typeof(string));
+                                    break;
+                                case System.Xml.XmlNodeType.CDATA:
+                                    break;
+                                case System.Xml.XmlNodeType.EntityReference:
+                                    break;
+                                case System.Xml.XmlNodeType.Entity:
+                                    break;
+                                case System.Xml.XmlNodeType.ProcessingInstruction:
+                                    break;
+                                case System.Xml.XmlNodeType.Comment:
+                                    break;
+                                case System.Xml.XmlNodeType.Document:
+                                    break;
+                                case System.Xml.XmlNodeType.DocumentType:
+                                    break;
+                                case System.Xml.XmlNodeType.DocumentFragment:
+                                    break;
+                                case System.Xml.XmlNodeType.Notation:
+                                    break;
+                                case System.Xml.XmlNodeType.Whitespace:
+                                    break;
+                                case System.Xml.XmlNodeType.SignificantWhitespace:
+                                    break;
+                                case System.Xml.XmlNodeType.EndElement:
+                                    break;
+                                case System.Xml.XmlNodeType.EndEntity:
+                                    break;
+                                case System.Xml.XmlNodeType.XmlDeclaration:
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            dt.Columns.Add(fieldName, typeof(string));
+                        }
+                    }
+                }
             }
 
 
             // In case of that add/remove columns when reload
-            dt.Columns.Clear();
-
-            if (ret != null && ret.records.Count<sObject>() > 0)
-            {
-                sObject rec = ret.records.First<sObject>();
-                // create column info based on 1st row
-                foreach (System.Xml.XmlElement col in rec.Any)
-                {
-                    if (col.FirstChild != null)
-                    {
-                        switch (col.FirstChild.NodeType)
-                        {
-                            case System.Xml.XmlNodeType.None:
-                                break;
-                            case System.Xml.XmlNodeType.Element:
-                                break;
-                            case System.Xml.XmlNodeType.Attribute:
-                                break;
-                            case System.Xml.XmlNodeType.Text:
-                                dt.Columns.Add(col.LocalName, typeof(string));
-                                break;
-                            case System.Xml.XmlNodeType.CDATA:
-                                break;
-                            case System.Xml.XmlNodeType.EntityReference:
-                                break;
-                            case System.Xml.XmlNodeType.Entity:
-                                break;
-                            case System.Xml.XmlNodeType.ProcessingInstruction:
-                                break;
-                            case System.Xml.XmlNodeType.Comment:
-                                break;
-                            case System.Xml.XmlNodeType.Document:
-                                break;
-                            case System.Xml.XmlNodeType.DocumentType:
-                                break;
-                            case System.Xml.XmlNodeType.DocumentFragment:
-                                break;
-                            case System.Xml.XmlNodeType.Notation:
-                                break;
-                            case System.Xml.XmlNodeType.Whitespace:
-                                break;
-                            case System.Xml.XmlNodeType.SignificantWhitespace:
-                                break;
-                            case System.Xml.XmlNodeType.EndElement:
-                                break;
-                            case System.Xml.XmlNodeType.EndEntity:
-                                break;
-                            case System.Xml.XmlNodeType.XmlDeclaration:
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        dt.Columns.Add(col.LocalName, typeof(string));
-                    }
-                }
-            }
+            // dt.Columns.Clear();
 
             // clear rows then re-bind them.
             dt.Rows.Clear();
@@ -178,7 +198,9 @@ namespace sforceAddin.sforce
 
                 foreach (System.Xml.XmlElement col in rec.Any)
                 {
-                    dr[col.LocalName] = col.InnerText;
+                    // dr[col.LocalName] = col.InnerText;
+                    string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                    dr[fieldName] = col.InnerText;
                 }
 
                 dt.Rows.Add(dr);

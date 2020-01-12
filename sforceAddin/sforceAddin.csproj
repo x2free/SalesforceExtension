@@ -154,6 +154,8 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="Auth\AuthServer.cs" />
+    <Compile Include="Auth\AuthUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -164,6 +166,7 @@
       <DependentUpon>sforceRibbon.cs</DependentUpon>
     </Compile>
     <Compile Include="sforce\SForceClient.cs" />
+    <Compile Include="sforce\SFSession.cs" />
     <Compile Include="sforce\SObjectEntry.cs" />
     <Compile Include="UI\sforceListViewControl.cs">
       <SubType>UserControl</SubType>
@@ -214,6 +217,7 @@
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
     </Compile>
+    <None Include="sforceAddin_1_TemporaryKey.pfx" />
     <None Include="sforceAddin_TemporaryKey.pfx" />
     <None Include="ThisAddIn.Designer.xml">
       <DependentUpon>ThisAddIn.cs</DependentUpon>
@@ -417,10 +421,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>sforceAddin_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>sforceAddin_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>A1C84F56B0AC18A56C22F851BB65A20C4F94F457</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>16A0DE852F564107DCDF56D0B6F4ABD3FD10748A</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

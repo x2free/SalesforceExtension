@@ -22,8 +22,79 @@ namespace sforceAddin
 
         }
 
+
+        public void StartListen()
+        {
+            int iStartPos = 0;
+            String sRequest;
+            String sDirName;
+            String sRequestedFile;
+            //String sErrorMessage;
+            //String sLocalDir;
+            //String sMyWebServerRoot = "C:\\MyWebServerRoot\\";
+            //String sPhysicalFilePath = "";
+            //String sFormattedMessage = "";
+            //String sResponse = "";
+            while (true)
+            {
+                //Accept a new connection  
+                System.Net.Sockets.Socket mySocket = myListener.AcceptSocket();
+                Console.WriteLine("Socket Type " + mySocket.SocketType);
+                if (mySocket.Connected)
+                {
+                    Console.WriteLine(@"\nClient Connected!!\n==================\n CLient IP { 0}\n", mySocket.RemoteEndPoint);
+                    //make a byte array and receive data from the client   
+                    Byte[] bReceive = new Byte[1024];
+                    int i = mySocket.Receive(bReceive, bReceive.Length, 0);
+                    //Convert Byte to String  
+                    string sBuffer = Encoding.ASCII.GetString(bReceive);
+                    //At present we will only deal with GET type  
+                    if (sBuffer.Substring(0, 3) != "GET")
+                    {
+                        Console.WriteLine("Only Get Method is supported..");
+                        mySocket.Close();
+                        return;
+                    }
+                    // Look for HTTP request  
+                    iStartPos = sBuffer.IndexOf("HTTP", 1);
+                    // Get the HTTP text and version e.g. it will return "HTTP/1.1"  
+                    string sHttpVersion = sBuffer.Substring(iStartPos, 8);
+                    // Extract the Requested Type and Requested file/directory  
+                    sRequest = sBuffer.Substring(0, iStartPos - 1);
+                    //Replace backslash with Forward Slash, if Any  
+                    sRequest.Replace("\\", "/");
+                    //If file name is not supplied add forward slash to indicate   
+                    //that it is a directory and then we will look for the   
+                    //default file name..  
+                    if ((sRequest.IndexOf(".") < 1) && (!sRequest.EndsWith("/")))
+                    {
+                        sRequest = sRequest + "/";
+                    }
+                    //Extract the requested file name  
+                    iStartPos = sRequest.LastIndexOf("/") + 1;
+                    sRequestedFile = sRequest.Substring(iStartPos);
+                    //Extract The directory Name  
+                    sDirName = sRequest.Substring(sRequest.IndexOf("/"), sRequest.LastIndexOf("/") - 3);
+                }
+            }
+        }
+
+        System.Net.Sockets.TcpListener myListener;
+        int port = 5050;
         private void btn_login_Click(object sender, RibbonControlEventArgs e)
         {
+            Auth.AuthUtil.doAuth();
+
+            ////start listing on the given port  
+            //myListener = new System.Net.Sockets.TcpListener(IPAddress.Parse("127.0.0.1"), port);
+            //myListener.Start();
+            //Console.WriteLine("Web Server Running... Press ^C to Stop...");
+            ////start the thread which calls the method 'StartListen'  
+            //System.Threading.Thread th = new System.Threading.Thread(new System.Threading.ThreadStart(StartListen));
+            //th.Start();
+
+            /*
+
             Cursor oldCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
 
@@ -32,7 +103,10 @@ namespace sforceAddin
             string secuToken = "";
 
             sfClient = new sforce.SForceClient();
-            bool isSucess = sfClient.login(userName, password, secuToken);
+            // bool isSucess = sfClient.login(userName, password, secuToken);
+
+            sforce.SFSession sfSession = sforce.SFSession.GetSession();
+            bool isSucess = sfClient.login(sfSession);
 
             if (!isSucess)
             {
@@ -88,6 +162,7 @@ namespace sforceAddin
             Cursor.Current = oldCursor;
 
             btn_taskPane.Enabled = true;
+            */
         }
 
         private void Tv_sobjs_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -217,6 +292,70 @@ namespace sforceAddin
             updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
             deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
             addedTable = dt.GetChanges(System.Data.DataRowState.Added);
+        }
+
+        private void orgType_cb_TextChanged(object sender, RibbonControlEventArgs e)
+        {
+            RibbonComboBox cb = sender as RibbonComboBox;
+
+            switch (cb.Text.ToLower())
+            {
+                case "production":
+                    Auth.AuthUtil.baseUrl = "https://login.salesforce.com";
+                    break;
+                case "sandbox":
+                default:
+                    Auth.AuthUtil.baseUrl = "https://test.salesforce.com";
+                    break;
+            }
+        }
+
+        private void loadTable_btn_Click(object sender, RibbonControlEventArgs e)
+        {
+            Cursor oldCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+
+            sfClient = new sforce.SForceClient();
+            sforce.SFSession sfSession = sforce.SFSession.GetSession();
+            bool isSucess = sfClient.login(sfSession);
+
+            List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
+
+            UI.SObjectTreeViewControl treeView = new UI.SObjectTreeViewControl();
+            treeView.tv_sobjs.BeginUpdate();
+
+            treeView.tv_sobjs.Nodes.Add("SObjects");
+            treeView.tv_sobjs.Nodes.Add("Custom Settings");
+            foreach (sforce.SObjectEntry item in sobjectList)
+            {
+                // TreeNode node = new UI.SObjectNodeBase(item.Name, item.Label, sfClient);
+                // TreeNode node = new UI.SObjectNodeBase(item, sfClient);
+                // node.Collapse();
+                // treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
+
+                if (item.IsCustomSetting)
+                {
+                    treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item, null));
+                }
+                else
+                {
+                    treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item, null));
+                }
+            }
+
+            treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
+            treeView.tv_sobjs.EndUpdate();
+
+            taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+            taskPane.Visible = true;
+            taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
+
+
+            // taskPane.VisibleChanged += TaskPane_VisibleChanged;
+
+            Cursor.Current = oldCursor;
+
+            btn_taskPane.Enabled = true;
         }
     }
 }
