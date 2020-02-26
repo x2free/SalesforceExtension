@@ -209,6 +209,7 @@ namespace sforceAddin
                 if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     listObj = obj;
+                    break;
                 }
             }
 
@@ -225,11 +226,15 @@ namespace sforceAddin
             //{
             //    sb.AppendFormat("{0},", col.Name);
             //}
+            List<string> columnNameList = new List<string>();
 
-            //foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
-            //{
-            //    sb.AppendFormat("{0},", headerCell.Name.Name);
-            //}
+            foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+            {
+                // sb2.AppendFormat("{0},", headerCell.Name.Name);
+                sb.AppendFormat("{0},", headerCell.Name.Name.Substring(listObj.Name.Length + 1));
+
+                columnNameList.Add(headerCell.Name.Name.Replace('.', '_'));
+            }
 
             // get text instead of API names
             //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
@@ -242,13 +247,16 @@ namespace sforceAddin
 
             //}
 
-            foreach (Microsoft.Office.Interop.Excel.Name item in Globals.ThisAddIn.Application.Names)
-            {
-                if (item.Name != null && item.Name.StartsWith(listObj.Name))
-                {
-                    sb.AppendFormat("{0},", item.Name.Substring(listObj.Name.Length + 1));
-                }
-            }
+            //List<string> columnNameList = new List<string>();
+            //foreach (Microsoft.Office.Interop.Excel.Name item in Globals.ThisAddIn.Application.Names)
+            //{
+            //    if (item.Name != null && item.Name.StartsWith(listObj.Name))
+            //    {
+            //        sb.AppendFormat("{0},", item.Name.Substring(listObj.Name.Length + 1));
+
+            //        columnNameList.Add(item.Name.Replace('.', '_'));
+            //    }
+            //}
 
             //foreach (Microsoft.Office.Interop.Excel.Range cell in listObj.HeaderRowRange)
             //{
@@ -275,7 +283,8 @@ namespace sforceAddin
             // sheet2.lis
 
             Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
-            hostListObject.SetDataBinding(dt);
+            // hostListObject.SetDataBinding(dt, "", sb.ToString().Split(','));
+            hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
             hostListObject.RefreshDataRows();
         }
 

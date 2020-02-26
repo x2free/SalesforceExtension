@@ -41,11 +41,11 @@
             this.box1 = this.Factory.CreateRibbonBox();
             this.btn_login = this.Factory.CreateRibbonButton();
             this.orgType_cb = this.Factory.CreateRibbonComboBox();
+            this.loadTable_btn = this.Factory.CreateRibbonButton();
             this.btn_taskPane = this.Factory.CreateRibbonButton();
             this.grp_data = this.Factory.CreateRibbonGroup();
             this.btn_load = this.Factory.CreateRibbonButton();
             this.btn_upsert = this.Factory.CreateRibbonButton();
-            this.loadTable_btn = this.Factory.CreateRibbonButton();
             this.sfRibbonTab.SuspendLayout();
             this.grp_auth.SuspendLayout();
             this.box1.SuspendLayout();
@@ -91,6 +91,12 @@
             this.orgType_cb.Text = null;
             this.orgType_cb.TextChanged += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.orgType_cb_TextChanged);
             // 
+            // loadTable_btn
+            // 
+            this.loadTable_btn.Label = "Load Tables";
+            this.loadTable_btn.Name = "loadTable_btn";
+            this.loadTable_btn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.loadTable_btn_Click);
+            // 
             // btn_taskPane
             // 
             this.btn_taskPane.Label = "Show/Hide Task Pane";
@@ -115,12 +121,6 @@
             this.btn_upsert.Label = "Upsert Data";
             this.btn_upsert.Name = "btn_upsert";
             this.btn_upsert.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_upsert_Click);
-            // 
-            // loadTable_btn
-            // 
-            this.loadTable_btn.Label = "Load Tables";
-            this.loadTable_btn.Name = "loadTable_btn";
-            this.loadTable_btn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.loadTable_btn_Click);
             // 
             // sforceRibbon
             // 
