@@ -200,8 +200,22 @@ namespace sforceAddin.UI
             }
             else
             {
-                Microsoft.Office.Interop.Excel.ListColumn column = listObj.ListColumns.Add();
-                int cnt = listObj.ListColumns.Count;
+                Microsoft.Office.Tools.Excel.ListObject hostedListObj = Globals.Factory.GetVstoObject(listObj);
+
+                // To add a column, must disconnect from the binded datasource, or the column cannot be added,
+                // so that the consequent operation on this column will fail with exception.
+                if (hostedListObj.DataSource != null)
+                {
+                    hostedListObj.Disconnect();
+                }
+                int cnt = hostedListObj.ListColumns.Count;
+                Interop.ListColumn column = hostedListObj.ListColumns.Add(cnt + 1);
+                cnt = hostedListObj.ListColumns.Count;
+                column = hostedListObj.ListColumns[cnt];
+
+                // int cnt = listObj.ListColumns.Count;
+                // Microsoft.Office.Interop.Excel.ListColumn column = listObj.ListColumns.Add(cnt + 1);
+                // cnt = listObj.ListColumns.Count;
                 // column.Name = this.Name; // throwing exception if loaded data then add column again.
                 column.Name = string.Format("{0}_{1}", parent.Name, this.Name);
                 // Microsoft.Office.Interop.Excel.Range r = column.Range; // this won't get the header, it gets 2nd row
