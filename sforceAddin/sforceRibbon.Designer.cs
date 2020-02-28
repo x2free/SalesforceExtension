@@ -45,7 +45,7 @@
             this.btn_taskPane = this.Factory.CreateRibbonButton();
             this.grp_data = this.Factory.CreateRibbonGroup();
             this.btn_load = this.Factory.CreateRibbonButton();
-            this.btn_upsert = this.Factory.CreateRibbonButton();
+            this.btn_CommitChanges = this.Factory.CreateRibbonButton();
             this.sfRibbonTab.SuspendLayout();
             this.grp_auth.SuspendLayout();
             this.box1.SuspendLayout();
@@ -106,7 +106,7 @@
             // grp_data
             // 
             this.grp_data.Items.Add(this.btn_load);
-            this.grp_data.Items.Add(this.btn_upsert);
+            this.grp_data.Items.Add(this.btn_CommitChanges);
             this.grp_data.Label = "Data";
             this.grp_data.Name = "grp_data";
             // 
@@ -116,11 +116,11 @@
             this.btn_load.Name = "btn_load";
             this.btn_load.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_load_Click);
             // 
-            // btn_upsert
+            // btn_CommitChanges
             // 
-            this.btn_upsert.Label = "Upsert Data";
-            this.btn_upsert.Name = "btn_upsert";
-            this.btn_upsert.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_upsert_Click);
+            this.btn_CommitChanges.Label = "Commit Changes";
+            this.btn_CommitChanges.Name = "btn_CommitChanges";
+            this.btn_CommitChanges.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_upsert_Click);
             // 
             // sforceRibbon
             // 
@@ -148,7 +148,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_taskPane;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_data;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_load;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_upsert;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CommitChanges;
         public Microsoft.Office.Tools.Ribbon.RibbonComboBox orgType_cb;
         internal Microsoft.Office.Tools.Ribbon.RibbonBox box1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton loadTable_btn;

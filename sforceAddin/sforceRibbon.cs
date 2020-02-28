@@ -284,7 +284,8 @@ namespace sforceAddin
 
             Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
             // hostListObject.SetDataBinding(dt, "", sb.ToString().Split(','));
-            hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
+            // hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
+            hostListObject.SetDataBinding(dt);
             hostListObject.RefreshDataRows();
         }
 
@@ -296,11 +297,13 @@ namespace sforceAddin
             System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
             System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
+            sfClient.doUpdate(dt);
+
             dt.AcceptChanges();
 
-            updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
-            deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
-            addedTable = dt.GetChanges(System.Data.DataRowState.Added);
+            //updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
+            //deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
+            //addedTable = dt.GetChanges(System.Data.DataRowState.Added);
         }
 
         private void orgType_cb_TextChanged(object sender, RibbonControlEventArgs e)

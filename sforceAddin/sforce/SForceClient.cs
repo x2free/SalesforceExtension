@@ -1,10 +1,12 @@
 ﻿using sforceAddin.SFDC;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace sforceAddin.sforce
 {
@@ -129,7 +131,8 @@ namespace sforceAddin.sforce
                 isChanged = true;
             }
 
-            if (ret.records.Count<sObject>() > 0) {
+            if (ret.records.Count<sObject>() > 0)
+            {
                 sObject rec = ret.records.First<sObject>();
 
                 if (dt.Columns.Count != rec.Any.Count())
@@ -150,7 +153,8 @@ namespace sforceAddin.sforce
                 // create column info based on 1st row
                 foreach (System.Xml.XmlElement col in rec.Any)
                 {
-                    string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                    // string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                    string fieldName = col.LocalName;
                     if (col.FirstChild != null)
                     {
                         switch (col.FirstChild.NodeType)
@@ -203,11 +207,11 @@ namespace sforceAddin.sforce
                 }
             }
 
-                // In case of that add/remove columns when reload
-                // dt.Columns.Clear();
+            // In case of that add/remove columns when reload
+            // dt.Columns.Clear();
 
-                // clear rows then re-bind them.
-                dt.Rows.Clear();
+            // clear rows then re-bind them.
+            dt.Rows.Clear();
 
             foreach (sObject rec in ret.records)
             {
@@ -216,12 +220,15 @@ namespace sforceAddin.sforce
                 foreach (System.Xml.XmlElement col in rec.Any)
                 {
                     // dr[col.LocalName] = col.InnerText;
-                    string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                    // string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                    string fieldName = col.LocalName;
                     dr[fieldName] = col.InnerText;
                 }
 
                 dt.Rows.Add(dr);
             }
+
+            dt.AcceptChanges();
 
             return dt;
         }
@@ -232,78 +239,146 @@ namespace sforceAddin.sforce
             System.Data.DataTable deletedTable = table.GetChanges(System.Data.DataRowState.Deleted);
             System.Data.DataTable addedTable = table.GetChanges(System.Data.DataRowState.Added);
 
+            //DataTable upsertTable = table.GetChanges(DataRowState.Modified | DataRowState.Added);
+
             List<sObject> upsertList = new List<sObject>();
 
             // refer to https://developer.salesforce.com/forums/?id=906F00000008sJ3IAI
+            // and https://developer.salesforce.com/forums/?id=906F00000008sErIAI
             // to create objects
-            foreach (var item in updatedTable.Rows)
+
+            XmlDocument doc = new XmlDocument();
+
+            if (updatedTable != null)
             {
-                sObject obj = new sObject();
+                foreach (System.Data.DataRow row in updatedTable.Rows)
+                {
+                    sObject obj = new sObject();
+                    obj.type = updatedTable.TableName;
+                    bool isChanged = false;
+
+                    List<XmlElement> fieldElements = new List<XmlElement>();
+
+                    foreach (System.Data.DataColumn column in updatedTable.Columns)
+                    {
+                        var oldValue = row[column, DataRowVersion.Original];
+                        var curValue = row[column, DataRowVersion.Current];
+
+                        XmlElement field = null;
+                        // if (row.IsNull(column))
+                        if (curValue == DBNull.Value)
+                        {
+                            if (oldValue == DBNull.Value || string.IsNullOrEmpty(oldValue as string)) // empty but not changed, ignore this field for this row
+                            {
+                                continue;
+                            }
+                            else // this field gets deleted
+                            {
+                                field = doc.CreateElement(column.ColumnName);
+                                field.InnerText = null;
+
+                                isChanged |= true;
+                            }
+                        }
+                        else if (curValue != oldValue)
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)row[column];
+                            field.InnerText = (string)curValue;
+
+                            isChanged |= true;
+                        }
+                        else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = (string)curValue;
+                        }
+                        // what if the field is Id?
+
+                        fieldElements.Add(field);
+                    }
+
+                    if (isChanged)
+                    {
+                        obj.Any = fieldElements.ToArray();
+
+                        upsertList.Add(obj);
+                    }
+                }
             }
 
-            /*
-             
-col
-{Element, Name="sf:Id"}
-    Attributes: {System.Xml.XmlAttributeCollection}
-    BaseURI: ""
-    ChildNodes: {System.Xml.XmlChildNodes}
-    FirstChild: {Text, Value="0016F00002cseUHQAY"}
-    HasAttributes: false
-    HasChildNodes: true
-    InnerText: "0016F00002cseUHQAY"
-    InnerXml: "0016F00002cseUHQAY"
-    IsEmpty: false
-    IsReadOnly: false
-    LastChild: {Text, Value="0016F00002cseUHQAY"}
-    LocalName: "Id"
-    Name: "sf:Id"
-    NamespaceURI: "urn:sobject.partner.soap.sforce.com"
-    NextSibling: null
-    NodeType: Element
-    OuterXml: "<sf:Id xmlns:sf=\"urn:sobject.partner.soap.sforce.com\">0016F00002cseUHQAY</sf:Id>"
-    OwnerDocument: {Document}
-    ParentNode: null
-    Prefix: "sf"
-    PreviousSibling: null
-    PreviousText: null
-    SchemaInfo: {System.Xml.XmlName}
-    Value: null
-    Results View: Expanding the Results View will enumerate the IEnumerable
-col.ChildNodes
-{System.Xml.XmlChildNodes}
-    Count: 1
-    Results View: Expanding the Results View will enumerate the IEnumerable
-col.ChildNodes[0]
-{Text, Value="0016F00002cseUHQAY"}
-    Attributes: null
-    BaseURI: ""
-    ChildNodes: {System.Xml.XmlChildNodes}
-    Data: "0016F00002cseUHQAY"
-    FirstChild: null
-    HasChildNodes: false
-    InnerText: "0016F00002cseUHQAY"
-    InnerXml: ""
-    IsReadOnly: false
-    LastChild: null
-    Length: 18
-    LocalName: "#text"
-    Name: "#text"
-    NamespaceURI: ""
-    NextSibling: null
-    NodeType: Text
-    OuterXml: "0016F00002cseUHQAY"
-    OwnerDocument: {Document}
-    ParentNode: {Element, Name="sf:Id"}
-    Prefix: ""
-    PreviousSibling: null
-    PreviousText: null
-    SchemaInfo: {System.Xml.Schema.XmlSchemaInfo}
-    Value: "0016F00002cseUHQAY"
-    Results View: Expanding the Results View will enumerate the IEnumerable
+            foreach (DataRow row in addedTable.Rows)
+            {
+                sObject obj = new sObject();
+                obj.type = addedTable.TableName;
 
-             
-             */
+                List<XmlElement> fieldElements = new List<XmlElement>();
+
+                foreach (System.Data.DataColumn column in addedTable.Columns)
+                {
+                    var curValue = row[column, DataRowVersion.Current];
+
+                    XmlElement field = null;
+                    // if (row.IsNull(column))
+                    if (curValue == DBNull.Value || string.IsNullOrEmpty(curValue as string) || "id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        continue;
+                    }
+                    //else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                    //{
+                    //    field = doc.CreateElement(column.ColumnName);
+                    //    field.InnerText = null;
+                    //}
+                    else
+                    {
+                        field = doc.CreateElement(column.ColumnName);
+                        field.InnerText = (string)curValue;
+                    }
+
+                    fieldElements.Add(field);
+                }
+
+                obj.Any = fieldElements.ToArray();
+                upsertList.Add(obj);
+            }
+
+            if (upsertList.Count > 0)
+            {
+                UpsertResult[] results =  sfSvc.upsert("Id", upsertList.ToArray());
+
+                foreach (UpsertResult ret in results)
+                {
+                    if (!ret.success)
+                    {
+                        Error[] errors = ret.errors;
+                    }
+
+                }
+            }
+
+            List<string> idsToDelete = new List<string>();
+            foreach (DataRow row in deletedTable.Rows)
+            {
+                string id = row["Id", DataRowVersion.Original] as string;
+
+                if (!string.IsNullOrEmpty(id))
+                {
+                    idsToDelete.Add(id);
+                }
+            }
+
+            if (idsToDelete.Count > 0)
+            {
+                DeleteResult[] results = sfSvc.delete(idsToDelete.ToArray());
+
+                foreach (DeleteResult result in results)
+                {
+                    if (!result.success)
+                    {
+                        Error[] errors = result.errors;
+                    }
+                }
+            }
         }
 
         private void Dt_RowDeleted(object sender, System.Data.DataRowChangeEventArgs e)
