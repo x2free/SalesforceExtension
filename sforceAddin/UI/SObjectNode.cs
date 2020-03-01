@@ -237,7 +237,7 @@ namespace sforceAddin.UI
             }
 
             // remove this node once add to sheet
-            parent.Nodes.Remove(this);
+            // parent.Nodes.Remove(this);
         }
     }
 }

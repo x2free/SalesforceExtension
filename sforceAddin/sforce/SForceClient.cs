@@ -253,16 +253,21 @@ namespace sforceAddin.sforce
             {
                 foreach (System.Data.DataRow row in updatedTable.Rows)
                 {
+                    IEnumerable<DataColumn> changedCols = DataRowExtensions.GetChangedColumns(row);
                     sObject obj = new sObject();
                     obj.type = updatedTable.TableName;
                     bool isChanged = false;
 
                     List<XmlElement> fieldElements = new List<XmlElement>();
+                    List<String> fields2Null = null;
 
                     foreach (System.Data.DataColumn column in updatedTable.Columns)
                     {
                         var oldValue = row[column, DataRowVersion.Original];
                         var curValue = row[column, DataRowVersion.Current];
+                        object fieldValue = null;
+
+                        // DateTime? dt = row.Field<DateTime?>(column);
 
                         XmlElement field = null;
                         // if (row.IsNull(column))
@@ -274,72 +279,92 @@ namespace sforceAddin.sforce
                             }
                             else // this field gets deleted
                             {
-                                field = doc.CreateElement(column.ColumnName);
-                                field.InnerText = null;
+                                // field = doc.CreateElement(column.ColumnName);
+                                // field.InnerText = null;
+                                // fieldValue = string.Empty;
+                                // fieldValue = DBNull.Value;
+
+                                if (fields2Null == null)
+                                {
+                                    fields2Null = new List<string>();
+                                }
+                                fields2Null.Add(column.ColumnName);
 
                                 isChanged |= true;
                             }
                         }
                         else if (curValue != oldValue)
                         {
-                            field = doc.CreateElement(column.ColumnName);
+                            // field = doc.CreateElement(column.ColumnName);
                             // field.InnerText = (string)row[column];
-                            field.InnerText = (string)curValue;
+                            // field.InnerText = (string)curValue;
+                            fieldValue = curValue;
 
                             isChanged |= true;
                         }
                         else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            field = doc.CreateElement(column.ColumnName);
-                            field.InnerText = (string)curValue;
+                            // field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)curValue;
+                            fieldValue = curValue;
                         }
                         // what if the field is Id?
 
-                        fieldElements.Add(field);
+                        // if (fieldValue != null || isChanged)
+                        if (fieldValue != null)
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = fieldValue as string;
+
+                            fieldElements.Add(field);
+                        }
                     }
 
                     if (isChanged)
                     {
                         obj.Any = fieldElements.ToArray();
-
+                        obj.fieldsToNull = fields2Null == null ? null : fields2Null.ToArray();
                         upsertList.Add(obj);
                     }
                 }
             }
 
-            foreach (DataRow row in addedTable.Rows)
+            if (addedTable != null)
             {
-                sObject obj = new sObject();
-                obj.type = addedTable.TableName;
-
-                List<XmlElement> fieldElements = new List<XmlElement>();
-
-                foreach (System.Data.DataColumn column in addedTable.Columns)
+                foreach (DataRow row in addedTable.Rows)
                 {
-                    var curValue = row[column, DataRowVersion.Current];
+                    sObject obj = new sObject();
+                    obj.type = addedTable.TableName;
 
-                    XmlElement field = null;
-                    // if (row.IsNull(column))
-                    if (curValue == DBNull.Value || string.IsNullOrEmpty(curValue as string) || "id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                    List<XmlElement> fieldElements = new List<XmlElement>();
+
+                    foreach (System.Data.DataColumn column in addedTable.Columns)
                     {
-                        continue;
-                    }
-                    //else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
-                    //{
-                    //    field = doc.CreateElement(column.ColumnName);
-                    //    field.InnerText = null;
-                    //}
-                    else
-                    {
-                        field = doc.CreateElement(column.ColumnName);
-                        field.InnerText = (string)curValue;
+                        var curValue = row[column, DataRowVersion.Current];
+
+                        XmlElement field = null;
+                        // if (row.IsNull(column))
+                        if (curValue == DBNull.Value || string.IsNullOrEmpty(curValue as string) || "id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            continue;
+                        }
+                        //else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        //{
+                        //    field = doc.CreateElement(column.ColumnName);
+                        //    field.InnerText = null;
+                        //}
+                        else
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = (string)curValue;
+                        }
+
+                        fieldElements.Add(field);
                     }
 
-                    fieldElements.Add(field);
+                    obj.Any = fieldElements.ToArray();
+                    upsertList.Add(obj);
                 }
-
-                obj.Any = fieldElements.ToArray();
-                upsertList.Add(obj);
             }
 
             if (upsertList.Count > 0)
@@ -357,13 +382,17 @@ namespace sforceAddin.sforce
             }
 
             List<string> idsToDelete = new List<string>();
-            foreach (DataRow row in deletedTable.Rows)
-            {
-                string id = row["Id", DataRowVersion.Original] as string;
 
-                if (!string.IsNullOrEmpty(id))
+            if (deletedTable != null)
+            {
+                foreach (DataRow row in deletedTable.Rows)
                 {
-                    idsToDelete.Add(id);
+                    string id = row["Id", DataRowVersion.Original] as string;
+
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        idsToDelete.Add(id);
+                    }
                 }
             }
 
@@ -380,6 +409,32 @@ namespace sforceAddin.sforce
                 }
             }
         }
+
+        private static bool hasCellChanged(DataRow row, DataColumn col)
+        {
+            if (!row.HasVersion(DataRowVersion.Original))
+            {
+                // Row has been added. All columns have changed. 
+                return true;
+            }
+            if (!row.HasVersion(DataRowVersion.Current))
+            {
+                // Row has been removed. No columns have changed.
+                return false;
+            }
+            var originalVersion = row[col, DataRowVersion.Original];
+            var currentVersion = row[col, DataRowVersion.Current];
+            if (originalVersion == DBNull.Value && currentVersion == DBNull.Value)
+            {
+                return false;
+            }
+            else if (originalVersion != DBNull.Value && currentVersion != DBNull.Value)
+            {
+                return !originalVersion.Equals(currentVersion);
+            }
+            return true;
+        }
+
 
         private void Dt_RowDeleted(object sender, System.Data.DataRowChangeEventArgs e)
         {
@@ -408,6 +463,54 @@ namespace sforceAddin.sforce
                 // this.sfSvc
                 return false;
             }
+        }
+    }
+
+    public static class DataRowExtensions
+    {
+        private static bool hasCellChanged(DataRow row, DataColumn col)
+        {
+            if (!row.HasVersion(DataRowVersion.Original))
+            {
+                // Row has been added. All columns have changed. 
+                return true;
+            }
+            if (!row.HasVersion(DataRowVersion.Current))
+            {
+                // Row has been removed. No columns have changed.
+                return false;
+            }
+            var originalVersion = row[col, DataRowVersion.Original];
+            var currentVersion = row[col, DataRowVersion.Current];
+            if (originalVersion == DBNull.Value && currentVersion == DBNull.Value)
+            {
+                return false;
+            }
+            else if (originalVersion != DBNull.Value && currentVersion != DBNull.Value)
+            {
+                return !originalVersion.Equals(currentVersion);
+            }
+
+            return true;
+        }
+
+        public static IEnumerable<DataColumn> GetChangedColumns(this DataRow row)
+        {
+            return row.Table.Columns.Cast<DataColumn>()
+                .Where(col => hasCellChanged(row, col));
+        }
+
+        public static IEnumerable<DataColumn> GetChangedColumns(this IEnumerable<DataRow> rows)
+        {
+            return rows.SelectMany(row => row.GetChangedColumns())
+                .Distinct();
+        }
+
+        public static IEnumerable<DataColumn> GetChangedColumns(this DataTable table)
+        {
+            return table.GetChanges().Rows
+                .Cast<DataRow>()
+                .GetChangedColumns();
         }
     }
 }
