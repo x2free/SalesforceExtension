@@ -16,7 +16,7 @@ namespace sforceAddin.Auth
         public static int port = 9286;
         public static string redirect_url = string.Format("http://localhost:{0}", port);
         public static string client_secret = "158FF1F4FBE35220BB658C5BFF30771CE2D9FF7F6CAF11925984956C184C20F8";
-        public static int apiVersion = 46;
+        public static int apiVersion = 48;
 
         public static void doAuth()
         {
