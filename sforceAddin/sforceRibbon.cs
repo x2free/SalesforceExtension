@@ -81,9 +81,13 @@ namespace sforceAddin
 
         System.Net.Sockets.TcpListener myListener;
         int port = 5050;
+
+        private Cursor cursorState = null;
         private void btn_login_Click(object sender, RibbonControlEventArgs e)
         {
-            Auth.AuthUtil.doAuth();
+            cursorState = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            Auth.AuthUtil.doAuth(initSFClient);
 
             ////start listing on the given port  
             //myListener = new System.Net.Sockets.TcpListener(IPAddress.Parse("127.0.0.1"), port);
@@ -163,6 +167,21 @@ namespace sforceAddin
 
             btn_taskPane.Enabled = true;
             */
+        }
+
+        private bool initSFClient(sforce.SFSession session)
+        {
+            if (session == null || !session.IsValid)
+            {
+                return false;
+            }
+
+            sfClient = new sforce.SForceClient();
+            sfClient.init(session);
+
+            Cursor.Current = this.cursorState;
+
+            return true;
         }
 
         private void Tv_sobjs_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -327,9 +346,9 @@ namespace sforceAddin
             Cursor oldCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
 
-            sfClient = new sforce.SForceClient();
-            sforce.SFSession sfSession = sforce.SFSession.GetSession();
-            bool isSucess = sfClient.login(sfSession);
+            //sfClient = new sforce.SForceClient();
+            //sforce.SFSession sfSession = sforce.SFSession.GetSession();
+            //bool isSucess = sfClient.login(sfSession);
 
             List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
 

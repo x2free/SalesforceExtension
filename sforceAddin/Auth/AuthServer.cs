@@ -15,6 +15,12 @@ namespace sforceAddin.Auth
     class AuthServer
     {
         private TcpListener server;
+        private Func<sforce.SFSession, bool> callback;
+
+        public AuthServer(Func<sforce.SFSession, bool> callback)
+        {
+            this.callback = callback;
+        }
 
         public void startServer(int port)
         {
@@ -73,7 +79,7 @@ namespace sforceAddin.Auth
                 //string postData = string.Format("grant_type=authorization_code&code={0}&client_id={1}&client_secret={2}&redirect_uri={3}"
                 //                    , System.Net.WebUtility.UrlEncode(code), client_id, client_secret, System.Net.WebUtility.UrlEncode(redirect_url));
                 string postData = string.Format("grant_type=authorization_code&code={0}&&redirect_uri={1}&state=two"
-                                   , code, System.Net.WebUtility.UrlEncode( AuthUtil.redirect_url));
+                                   , code, System.Net.WebUtility.UrlEncode(AuthUtil.redirect_url));
                 var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(AuthUtil.baseUrl + AuthUtil.token_url);
                 // var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(domainInstanceUri + token_url);
 
@@ -108,7 +114,7 @@ namespace sforceAddin.Auth
 
                     XmlSerializer xs = new XmlSerializer(typeof(OAuth));
                     OAuth oAuthObj = (OAuth)xs.Deserialize(new StringReader(responseString));
-                    
+
                     sforce.SFSession sfSession = sforce.SFSession.GetSession();
                     sfSession.SessionId = oAuthObj.access_token;
                     sfSession.Signature = oAuthObj.signature;
@@ -119,6 +125,9 @@ namespace sforceAddin.Auth
                     sfSession.Scope = oAuthObj.scope;
                     sfSession.TokenType = oAuthObj.token_type;
                     sfSession.ApiVersion = AuthUtil.apiVersion;
+                    sfSession.IsValid = true;
+
+                    this.callback(sfSession);
 
                     // response
                     string statusLine = "HTTP/1.1 200 OK\r\n";

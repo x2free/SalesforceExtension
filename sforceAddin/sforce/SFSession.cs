@@ -29,6 +29,7 @@ namespace sforceAddin.sforce
             return _session;
         }
 
+        public bool IsValid;
         public string SessionId;
         public string Scope;
         public string Signature;

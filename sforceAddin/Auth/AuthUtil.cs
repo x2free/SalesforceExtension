@@ -18,7 +18,7 @@ namespace sforceAddin.Auth
         public static string client_secret = "158FF1F4FBE35220BB658C5BFF30771CE2D9FF7F6CAF11925984956C184C20F8";
         public static int apiVersion = 48;
 
-        public static void doAuth()
+        public static void doAuth(Func<sforce.SFSession, bool> callback)
         {
             /*
                 https://login.salesforce.com/services/oauth2/authorize?response_type=code
@@ -33,7 +33,7 @@ namespace sforceAddin.Auth
             //thread.Start();
 
             // start callback server
-            AuthServer authSvr = new AuthServer();
+            AuthServer authSvr = new AuthServer(callback);
             authSvr.startServer(AuthUtil.port);
             System.Threading.Thread thread = new System.Threading.Thread(authSvr.handleRequest);
             thread.Start();

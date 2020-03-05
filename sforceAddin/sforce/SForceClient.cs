@@ -18,7 +18,7 @@ namespace sforceAddin.sforce
 
         public List<SObjectEntry> sobjectList;
 
-        public bool login(sforce.SFSession sfSession)
+        public bool init(sforce.SFSession sfSession)
         {
             sfSvc = new SFDC.SforceService();
             sfSvc.SessionHeaderValue = new SessionHeader();
