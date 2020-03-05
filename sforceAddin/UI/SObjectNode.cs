@@ -210,6 +210,7 @@ namespace sforceAddin.UI
                 }
                 int cnt = hostedListObj.ListColumns.Count;
                 Interop.ListColumn column = hostedListObj.ListColumns.Add(cnt + 1);
+                column.Range.NumberFormat = "@"; // format as string
                 cnt = hostedListObj.ListColumns.Count;
                 column = hostedListObj.ListColumns[cnt];
 

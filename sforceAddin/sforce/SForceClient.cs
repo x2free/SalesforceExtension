@@ -118,6 +118,7 @@ namespace sforceAddin.sforce
                 throw new Exception("No data loaded!");
             }
 
+            // column
             bool isChanged = false;
             if (dt == null)
             {
@@ -213,20 +214,30 @@ namespace sforceAddin.sforce
             // clear rows then re-bind them.
             dt.Rows.Clear();
 
-            foreach (sObject rec in ret.records)
+            do
             {
-                System.Data.DataRow dr = dt.NewRow();
-
-                foreach (System.Xml.XmlElement col in rec.Any)
+                foreach (sObject rec in ret.records)
                 {
-                    // dr[col.LocalName] = col.InnerText;
-                    // string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
-                    string fieldName = col.LocalName;
-                    dr[fieldName] = col.InnerText;
+                    System.Data.DataRow dr = dt.NewRow();
+
+                    foreach (System.Xml.XmlElement col in rec.Any)
+                    {
+                        // dr[col.LocalName] = col.InnerText;
+                        // string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
+                        string fieldName = col.LocalName;
+                        dr[fieldName] = col.InnerText;
+                    }
+
+                    dt.Rows.Add(dr);
                 }
 
-                dt.Rows.Add(dr);
-            }
+                if (ret.done)
+                {
+                    break;
+                }
+
+                ret = sfSvc.queryMore(ret.queryLocator);
+            } while (true);
 
             dt.AcceptChanges();
 
