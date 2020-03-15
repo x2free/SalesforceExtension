@@ -188,6 +188,9 @@ namespace sforceAddin.UI
                 // listObj.DisplayName = parent.Name;
                 listObj.Name = tableName;
                 listObj.TableStyle = "TableStyleMedium23";
+                Microsoft.Office.Tools.Excel.ListObject hostedListObj = Globals.Factory.GetVstoObject(listObj);
+                hostedListObj.Change += ListObject_Change;
+                hostedListObj.OriginalDataRestored += HostedListObj_OriginalDataRestored;
 
                 //listObj = worksheet.Controls.AddListObject(Globals.ThisAddIn.Application.ActiveCell, parent.Name).InnerObject;
                 //// field header
@@ -239,6 +242,44 @@ namespace sforceAddin.UI
 
             // remove this node once add to sheet
             // parent.Nodes.Remove(this);
+        }
+
+        private void HostedListObj_OriginalDataRestored(object sender, Tools.OriginalDataRestoredEventArgs e)
+        {
+            // throw new NotImplementedException();
+        }
+
+        private void ListObject_Change(Interop.Range targetRange, Tools.ListRanges changedRanges)
+        {
+            // throw new NotImplementedException();
+            var entireColAddres = targetRange.EntireColumn.Address.Count();
+            var entireRowAddres = targetRange.EntireRow.Address;
+            var cellAddress = targetRange.Address.Count();
+
+            bool isColDeleting = entireColAddres == cellAddress;
+
+            if (changedRanges == (Tools.ListRanges.DataBodyRange | Tools.ListRanges.HeaderRowRange))
+            {
+                Tools.ListObject hostedListObj = Globals.Factory.GetVstoObject(targetRange.ListObject);
+                if (hostedListObj.DataSource != null)
+                {
+                    System.Data.DataTable dt = hostedListObj.DataSource as System.Data.DataTable;
+                    if (dt != null)
+                    {
+                        int count1 = hostedListObj.ListColumns.Count;
+                        int count2 = dt.Columns.Count;
+
+                        if (count1 < count2)
+                        {
+                            hostedListObj.Disconnect();
+                        }
+                    }
+                }
+                //if (hostedListObj.DataSource != null)
+                //{
+                //    hostedListObj.Disconnect();
+                //}
+            }
         }
     }
 }

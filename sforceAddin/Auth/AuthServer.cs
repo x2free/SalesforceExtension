@@ -127,7 +127,8 @@ namespace sforceAddin.Auth
                     sfSession.ApiVersion = AuthUtil.apiVersion;
                     sfSession.IsValid = true;
 
-                    this.callback(sfSession);
+                    // this.callback(sfSession);
+                    sforce.ConnectionManager.Instance.AddConnection(new sforce.Connection(sfSession));
 
                     // response
                     string statusLine = "HTTP/1.1 200 OK\r\n";

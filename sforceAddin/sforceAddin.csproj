@@ -188,6 +188,8 @@
     <Compile Include="sforceRibbon.Designer.cs">
       <DependentUpon>sforceRibbon.cs</DependentUpon>
     </Compile>
+    <Compile Include="sforce\Connection.cs" />
+    <Compile Include="sforce\ConnectionManager.cs" />
     <Compile Include="sforce\SForceClient.cs" />
     <Compile Include="sforce\SFSession.cs" />
     <Compile Include="sforce\SObjectEntry.cs" />
@@ -466,7 +468,7 @@
       <FlavorProperties GUID="{BAA0C2D2-18E2-41B9-852F-F413020CAA33}">
         <ProjectProperties HostName="Excel" HostPackage="{29A7B9D7-A7F1-4328-8EF0-6B2D1A56B2C1}" OfficeVersion="15.0" VstxVersion="4.0" ApplicationType="Excel" Language="cs" TemplatesPath="" DebugInfoExeName="#Software\Microsoft\Office\16.0\Excel\InstallRoot\Path#excel.exe" DebugInfoCommandLine="/x" AddItemTemplatesGuid="{51063C3A-E220-4D12-8922-BDA915ACD783}" />
         <Host Name="Excel" GeneratedCodeNamespace="sforceAddin" PublishedHash="69C324AB27932AA2FBF2B7EA72250886FF164DE6" IconIndex="0">
-          <HostItem Name="ThisAddIn" Code="ThisAddIn.cs" CanonicalName="AddIn" CanActivate="false" IconIndex="1" Blueprint="ThisAddIn.Designer.xml" GeneratedCode="ThisAddIn.Designer.cs" PublishedHash="A23F47A349AF8D5C0E4F021367EFAA5E28AD1982" />
+          <HostItem Name="ThisAddIn" Code="ThisAddIn.cs" CanonicalName="AddIn" PublishedHash="A23F47A349AF8D5C0E4F021367EFAA5E28AD1982" CanActivate="false" IconIndex="1" Blueprint="ThisAddIn.Designer.xml" GeneratedCode="ThisAddIn.Designer.cs" />
         </Host>
       </FlavorProperties>
     </VisualStudio>

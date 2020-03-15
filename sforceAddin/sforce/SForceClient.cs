@@ -20,8 +20,12 @@ namespace sforceAddin.sforce
 
         public bool init(sforce.SFSession sfSession)
         {
-            sfSvc = new SFDC.SforceService();
-            sfSvc.SessionHeaderValue = new SessionHeader();
+            if (sfSvc == null)
+            {
+                sfSvc = new SFDC.SforceService();
+                sfSvc.SessionHeaderValue = new SessionHeader();
+            }
+
             sfSvc.SessionHeaderValue.sessionId = sfSession.SessionId;
             // sfSvc.Url = sfSession.InstanceUrl;
             sfSvc.Url = sfSession.SoapPartnerUrl;

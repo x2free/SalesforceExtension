@@ -171,15 +171,15 @@ namespace sforceAddin
 
         private bool initSFClient(sforce.SFSession session)
         {
-            if (session == null || !session.IsValid)
-            {
-                return false;
-            }
+            //if (session == null || !session.IsValid)
+            //{
+            //    return false;
+            //}
 
-            sfClient = new sforce.SForceClient();
-            sfClient.init(session);
+            //sfClient = new sforce.SForceClient();
+            //sfClient.init(session);
 
-            Cursor.Current = this.cursorState;
+            //Cursor.Current = this.cursorState;
 
             return true;
         }
@@ -250,6 +250,8 @@ namespace sforceAddin
             foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
             {
                 // sb2.AppendFormat("{0},", headerCell.Name.Name);
+                var v1 = headerCell.Name;
+                var v2 = headerCell.Name.Name;
                 sb.AppendFormat("{0},", headerCell.Name.Name.Substring(listObj.Name.Length + 1));
 
                 columnNameList.Add(headerCell.Name.Name.Replace('.', '_'));
@@ -343,6 +345,22 @@ namespace sforceAddin
 
         private void loadTable_btn_Click(object sender, RibbonControlEventArgs e)
         {
+            sforce.Connection curConn = sforce.ConnectionManager.Instance.ActiveConnection;
+            if (curConn == null)
+            {
+                curConn = sforce.ConnectionManager.Instance.Connections.First();
+
+                curConn.Active((con) =>
+                {
+                    if (sfClient == null)
+                    {
+                        sfClient = new sforce.SForceClient();
+                    }
+
+                    sfClient.init(con.Session);
+                });
+            }
+
             Cursor oldCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
 
