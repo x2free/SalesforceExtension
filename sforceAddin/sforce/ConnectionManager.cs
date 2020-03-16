@@ -29,6 +29,14 @@ namespace sforceAddin.sforce
                 return false;
             }
 
+            if (connection.IsActive)
+            {
+                foreach (var con in this.Connections)
+                {
+                    con.Deactive();
+                }
+            }
+
             this.Connections.Add(connection);
 
             //if (callback != null)

@@ -15,9 +15,9 @@ namespace sforceAddin.Auth
     class AuthServer
     {
         private TcpListener server;
-        private Func<sforce.SFSession, bool> callback;
+        private Func<sforce.Connection, bool> callback;
 
-        public AuthServer(Func<sforce.SFSession, bool> callback)
+        public AuthServer(Func<sforce.Connection, bool> callback)
         {
             this.callback = callback;
         }
@@ -115,7 +115,8 @@ namespace sforceAddin.Auth
                     XmlSerializer xs = new XmlSerializer(typeof(OAuth));
                     OAuth oAuthObj = (OAuth)xs.Deserialize(new StringReader(responseString));
 
-                    sforce.SFSession sfSession = sforce.SFSession.GetSession();
+                    // sforce.SFSession sfSession = sforce.SFSession.GetSession();
+                    sforce.SFSession sfSession = new sforce.SFSession();
                     sfSession.SessionId = oAuthObj.access_token;
                     sfSession.Signature = oAuthObj.signature;
                     sfSession.Id = oAuthObj.id;
@@ -127,8 +128,8 @@ namespace sforceAddin.Auth
                     sfSession.ApiVersion = AuthUtil.apiVersion;
                     sfSession.IsValid = true;
 
-                    // this.callback(sfSession);
-                    sforce.ConnectionManager.Instance.AddConnection(new sforce.Connection(sfSession));
+                    sforce.Connection connection = new sforce.Connection(sfSession);
+                    sforce.ConnectionManager.Instance.AddConnection(connection);
 
                     // response
                     string statusLine = "HTTP/1.1 200 OK\r\n";
@@ -150,6 +151,12 @@ namespace sforceAddin.Auth
 
                     client.Close();
                     this.server.Stop();
+
+                    if (this.callback != null)
+                    {
+                        this.callback(connection);
+                    }
+
                     break;
                 }
                 catch (System.Net.WebException ex)

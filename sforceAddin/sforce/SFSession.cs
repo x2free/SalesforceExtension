@@ -9,25 +9,25 @@ namespace sforceAddin.sforce
 {
     class SFSession
     {
-        private static SFSession _session;
+        // private static SFSession _session;
 
-        private SFSession() { }
+        public SFSession() { }
 
-        public static SFSession GetSession()
-        {
-            if (_session == null)
-            {
-                lock (new object())
-                {
-                    if (_session == null)
-                    {
-                        _session = new SFSession();
-                    }
-                }
-            }
+        //public static SFSession GetSession()
+        //{
+        //    if (_session == null)
+        //    {
+        //        lock (new object())
+        //        {
+        //            if (_session == null)
+        //            {
+        //                _session = new SFSession();
+        //            }
+        //        }
+        //    }
 
-            return _session;
-        }
+        //    return _session;
+        //}
 
         public bool IsValid;
         public string SessionId;
@@ -68,24 +68,33 @@ namespace sforceAddin.sforce
         {
             get
             {
-                if (string.IsNullOrEmpty(this.soapPartnerUrl))
-                {
-                    this.soapPartnerUrl = string.Format("{0}/services/Soap/u/{1}.0/{2}", this.InstanceUrl, this.ApiVersion, this.OrgId);
-                }
+                //if (string.IsNullOrEmpty(this.soapPartnerUrl))
+                //{
+                //    this.soapPartnerUrl = string.Format("{0}/services/Soap/u/{1}.0/{2}", this.InstanceUrl, this.ApiVersion, this.OrgId);
+                //}
 
-                return this.soapPartnerUrl;
+                //return this.soapPartnerUrl;
+
+                return string.Format("{0}/services/Soap/u/{1}.0/{2}"
+                        , this.InstanceUrl
+                        , Auth.AuthUtil.apiVersion
+                        , this.OrgId); ;
             }
         }
         public string SoapMetadataUrl
         {
             get
             {
-                if (string.IsNullOrEmpty(this.soapMetadataUrl))
-                {
-                    this.soapMetadataUrl = string.Format("{0}/services/Soap/m/{1}.0", this.InstanceUrl, this.ApiVersion);
-                }
+                //if (string.IsNullOrEmpty(this.soapMetadataUrl))
+                //{
+                //    this.soapMetadataUrl = string.Format("{0}/services/Soap/m/{1}.0", this.InstanceUrl, this.ApiVersion);
+                //}
 
-                return this.soapMetadataUrl;
+                //return this.soapMetadataUrl;
+
+                return string.Format("{0}/services/Soap/m/{1}.0"
+                        , this.InstanceUrl
+                        , Auth.AuthUtil.apiVersion);
             }
         }
 

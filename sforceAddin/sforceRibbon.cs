@@ -87,7 +87,7 @@ namespace sforceAddin
         {
             cursorState = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
-            Auth.AuthUtil.doAuth(initSFClient);
+            // Auth.AuthUtil.doAuth(initSFClient);
 
             ////start listing on the given port  
             //myListener = new System.Net.Sockets.TcpListener(IPAddress.Parse("127.0.0.1"), port);
@@ -350,15 +350,17 @@ namespace sforceAddin
             {
                 curConn = sforce.ConnectionManager.Instance.Connections.First();
 
-                curConn.Active((con) =>
-                {
-                    if (sfClient == null)
-                    {
-                        sfClient = new sforce.SForceClient();
-                    }
+                curConn.Active();
+            }
 
-                    sfClient.init(con.Session);
-                });
+            if (sfClient == null)
+            {
+                if (sfClient == null)
+                {
+                    sfClient = new sforce.SForceClient();
+                }
+
+                sfClient.init(curConn.Session);
             }
 
             Cursor oldCursor = Cursor.Current;
@@ -405,6 +407,88 @@ namespace sforceAddin
             Cursor.Current = oldCursor;
 
             btn_taskPane.Enabled = true;
+        }
+
+        private void gallery_login_Click(object sender, RibbonControlEventArgs e)
+        {
+            RibbonGallery gallery = sender as RibbonGallery;
+            if (gallery == null)
+            {
+                return;
+            }
+
+            switch (gallery.SelectedItemIndex)
+            {
+                case 1: // production
+                    Auth.AuthUtil.baseUrl = "https://login.salesforce.com";
+                    break;
+                default: // sandbox
+                    Auth.AuthUtil.baseUrl = "https://test.salesforce.com";
+                    break;
+            }
+            Auth.AuthUtil.doAuth(updateOrgList);
+        }
+
+        private bool updateOrgList(sforce.Connection conn)
+        {
+            RibbonDropDownItem newItem = this.dropDown_org.Items.FirstOrDefault(item => item.Label == conn.InstanceName);
+            if (newItem != null)
+            {
+                conn = sforce.ConnectionManager.Instance.FindConnection(conn.InstanceName);
+            }
+            else
+            {
+                newItem = Factory.CreateRibbonDropDownItem();
+                newItem.Label = conn.InstanceName;
+
+                this.dropDown_org.Items.Add(newItem);
+            }
+
+            conn.Active();
+            this.dropDown_org.SelectedItem = newItem;
+
+            return true;
+        }
+
+        private void dropDown_org_SelectionChanged(object sender, RibbonControlEventArgs e)
+        {
+            RibbonDropDown dropDown = sender as RibbonDropDown;
+            if (dropDown == null)
+            {
+                return;
+            }
+            string orgName = dropDown.SelectedItem.Label;
+            sforce.Connection conn = sforce.ConnectionManager.Instance.FindConnection(orgName);
+            conn.Active((con) => {
+                if (sfClient == null)
+                {
+                    sfClient = new sforce.SForceClient();
+                }
+
+                sfClient.init(con.Session);
+            });
+        }
+
+        private void apiVersion_TextChanged(object sender, RibbonControlEventArgs e)
+        {
+            double version = 0;
+            bool ret = double.TryParse(this.editbox_APIVersion.Text, out version);
+            if (ret)
+            {
+                Auth.AuthUtil.apiVersion = (int)version;
+                this.editbox_APIVersion.Text = string.Format("{0}.0", Auth.AuthUtil.apiVersion);
+
+
+                //if (sfClient == null)
+                //{
+                //    sfClient = new sforce.SForceClient();
+
+                //    if (sforce.ConnectionManager.Instance.ActiveConnection != null)
+                //    {
+                //        sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
+                //    }
+                //}
+            }
         }
     }
 }
