@@ -292,6 +292,13 @@ namespace sforceAddin
             System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[tableName];
             bool isTableExist = dt != null;
             dt = sfClient.execQuery(queryStr, tableName, dt);
+
+            if (dt == null)
+            {
+                MessageBox.Show("No Data loaded", "sforce Addin", System.Windows.Forms.MessageBoxButtons.OK);
+                return;
+            }
+
             dt.AcceptChanges();
 
             if (!isTableExist)
@@ -444,8 +451,21 @@ namespace sforceAddin
                 this.dropDown_org.Items.Add(newItem);
             }
 
-            conn.Active();
-            this.dropDown_org.SelectedItem = newItem;
+            // conn.Active();
+            // this.dropDown_org.SelectedItem = newItem;
+
+            if (this.dropDown_org.Items.Count == 1)
+            {
+                conn.Active((con) => {
+                    if (sfClient == null)
+                    {
+                        sfClient = new sforce.SForceClient();
+                    }
+
+                    sfClient.init(con.Session);
+                });
+
+            }
 
             return true;
         }
@@ -488,6 +508,11 @@ namespace sforceAddin
                 //        sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
                 //    }
                 //}
+
+                if (sfClient != null && sforce.ConnectionManager.Instance.ActiveConnection != null)
+                {
+                    sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
+                }
             }
         }
     }

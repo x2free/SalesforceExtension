@@ -16,10 +16,29 @@ namespace sforceAddin.Auth
     {
         private TcpListener server;
         private Func<sforce.Connection, bool> callback;
+        private bool isStarted = false;
 
-        public AuthServer(Func<sforce.Connection, bool> callback)
+        private static AuthServer _instance;
+
+        private AuthServer(Func<sforce.Connection, bool> callback)
         {
             this.callback = callback;
+        }
+
+        public static AuthServer GetAuthServer(Func<sforce.Connection, bool> callback)
+        {
+            if (_instance == null)
+            {
+                lock (new object())
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new AuthServer(callback);
+                    }
+                }
+            }
+
+            return _instance;
         }
 
         public void startServer(int port)
@@ -29,14 +48,17 @@ namespace sforceAddin.Auth
                 IPEndPoint endPoint = new IPEndPoint(IPAddress.Loopback, port);
                 this.server = new TcpListener(endPoint);
             }
-
-            this.server.Start();
+            if (!this.isStarted)
+            {
+                this.server.Start();
+                this.isStarted = true;
+            }
             // Console.WriteLine("Listening on port " + port);
         }
 
         public void handleRequest()
         {
-            while (true)
+            while (this.isStarted)
             {
                 TcpClient client = server.AcceptTcpClient();
                 NetworkStream netStream = client.GetStream();
@@ -149,13 +171,14 @@ namespace sforceAddin.Auth
                     netStream.Write(new byte[] { 13, 10 }, 0, 2); // ??
                     netStream.Write(resBodyBytes, 0, resBodyBytes.Length);
 
-                    client.Close();
-                    this.server.Stop();
-
                     if (this.callback != null)
                     {
                         this.callback(connection);
                     }
+
+                    client.Close();
+                    this.server.Stop();
+                    this.isStarted = false;
 
                     break;
                 }

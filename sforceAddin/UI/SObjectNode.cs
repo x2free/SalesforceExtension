@@ -42,7 +42,7 @@ namespace sforceAddin.UI
         public SObjectNodeBase(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/, TreeNode parent)
         {
             this.Name = sobj.Name;
-            this.Text = sobj.Label;
+            this.Text = string.Format("{0}({1})", sobj.Label, sobj.Name);
             this.parent = parent;
 
             // this.sfClient = sfClient;

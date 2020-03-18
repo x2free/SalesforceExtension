@@ -33,7 +33,7 @@ namespace sforceAddin.Auth
             //thread.Start();
 
             // start callback server
-            AuthServer authSvr = new AuthServer(callback);
+            AuthServer authSvr = AuthServer.GetAuthServer(callback);
             authSvr.startServer(AuthUtil.port);
             System.Threading.Thread thread = new System.Threading.Thread(authSvr.handleRequest);
             thread.Start();

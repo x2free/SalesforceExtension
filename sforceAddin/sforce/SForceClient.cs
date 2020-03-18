@@ -119,7 +119,8 @@ namespace sforceAddin.sforce
 
             if (ret == null || ret.records == null)
             {
-                throw new Exception("No data loaded!");
+                //throw new Exception("No data loaded!");
+                return null;
             }
 
             // column

@@ -22,12 +22,13 @@ namespace sforceAddin.sforce
         // public bool AddConnection(Connection connection, ActiveConnectionChanged callback = null)
         public bool AddConnection(Connection connection)
         {
-            List<Connection> conns = this.Connections.FindAll(con => con.InstanceName.Equals(connection.InstanceName, StringComparison.CurrentCultureIgnoreCase));
+            //List<Connection> conns = this.Connections.FindAll(con => con.InstanceName.Equals(connection.InstanceName, StringComparison.CurrentCultureIgnoreCase));
 
-            if (conns != null && conns.Count > 0)
-            {
-                return false;
-            }
+            //if (conns != null && conns.Count > 0)
+            //{
+            this.Connections.RemoveAll(con => con.InstanceName.Equals(connection.InstanceName, StringComparison.CurrentCultureIgnoreCase));
+            this.Connections.Add(connection);
+            // }
 
             if (connection.IsActive)
             {
