@@ -44,6 +44,7 @@
             this.grp_data = this.Factory.CreateRibbonGroup();
             this.btn_load = this.Factory.CreateRibbonButton();
             this.btn_CommitChanges = this.Factory.CreateRibbonButton();
+            this.btn_CopySelection = this.Factory.CreateRibbonButton();
             this.grp_config = this.Factory.CreateRibbonGroup();
             this.editbox_APIVersion = this.Factory.CreateRibbonEditBox();
             this.buttonGroup1 = this.Factory.CreateRibbonButtonGroup();
@@ -94,6 +95,7 @@
             // 
             this.grp_data.Items.Add(this.btn_load);
             this.grp_data.Items.Add(this.btn_CommitChanges);
+            this.grp_data.Items.Add(this.btn_CopySelection);
             this.grp_data.Label = "Data";
             this.grp_data.Name = "grp_data";
             // 
@@ -107,7 +109,13 @@
             // 
             this.btn_CommitChanges.Label = "Commit Changes";
             this.btn_CommitChanges.Name = "btn_CommitChanges";
-            this.btn_CommitChanges.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_upsert_Click);
+            this.btn_CommitChanges.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_Commit_Changes);
+            // 
+            // btn_CopySelection
+            // 
+            this.btn_CopySelection.Label = "Copy Selection";
+            this.btn_CopySelection.Name = "btn_CopySelection";
+            this.btn_CopySelection.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CopySelection_Click);
             // 
             // grp_config
             // 
@@ -173,6 +181,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGallery gallery_addOrg;
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown_org;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CopySelection;
     }
 
     partial class ThisRibbonCollection

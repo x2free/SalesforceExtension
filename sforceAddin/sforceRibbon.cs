@@ -8,6 +8,9 @@ using System.Net;
 using System.Windows.Forms;
 using Microsoft.Office.Tools;
 
+using Interop = Microsoft.Office.Interop.Excel;
+using Tools = Microsoft.Office.Tools.Excel;
+
 namespace sforceAddin
 {
     public partial class sforceRibbon
@@ -317,7 +320,7 @@ namespace sforceAddin
             hostListObject.RefreshDataRows();
         }
 
-        private void btn_upsert_Click(object sender, RibbonControlEventArgs e)
+        private void btn_Commit_Changes(object sender, RibbonControlEventArgs e)
         {
             System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
 
@@ -514,6 +517,65 @@ namespace sforceAddin
                     sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
                 }
             }
+        }
+
+        private void btn_CopySelection_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
+
+            System.Data.DataTable updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
+            System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
+            System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
+
+            Tools.Worksheet sheet = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveSheet);
+            Tools.ListObject listObj = Globals.Factory.GetVstoObject(sheet.ListObjects.Item[sheet.Name]);
+
+            if (dt.GetChanges() != null)
+            {
+                DialogResult ret = MessageBox.Show("Save changes?", "sforce Addin", MessageBoxButtons.YesNoCancel);
+                switch (ret)
+                {
+                    case DialogResult.Cancel:
+                        return;
+                    case DialogResult.Yes:
+                        dt.AcceptChanges();
+                        break;
+                    case DialogResult.No:
+                        dt.RejectChanges();
+                        break;
+                    default:
+                        dt.RejectChanges(); // exception?
+                        break;
+                }
+            }
+
+            System.Data.DataTable changes = dt.GetChanges();
+            if (changes != null)
+            {
+                throw new Exception("changes????");
+            }
+
+            // List<int> indexList = new List<int>();
+            foreach (Interop.Range item in ((Interop.Range)Globals.ThisAddIn.Application.Selection).Rows)
+            {
+                // indexList.Add(item.Row);
+
+                // dt.Rows[item.Row - 2].SetModified(); // 2 = header + vsto starts from 1
+                dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
+            }
+
+
+            // updatedTable = dt.GetChanges(System.Data.DataRowState.Added);
+            // sfClient.doUpdate(updatedTable);
+            sfClient.doUpdate(dt);
+
+            dt.AcceptChanges();
+
+            //foreach (Interop.Range range in ranges)
+            //{
+
+            //}
+
         }
     }
 }

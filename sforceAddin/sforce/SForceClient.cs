@@ -309,6 +309,13 @@ namespace sforceAddin.sforce
                                 isChanged |= true;
                             }
                         }
+                        else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)curValue;
+
+                            fieldValue = curValue;
+                        }
                         else if (curValue != oldValue)
                         {
                             // field = doc.CreateElement(column.ColumnName);
@@ -318,13 +325,6 @@ namespace sforceAddin.sforce
 
                             isChanged |= true;
                         }
-                        else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            // field = doc.CreateElement(column.ColumnName);
-                            // field.InnerText = (string)curValue;
-                            fieldValue = curValue;
-                        }
-                        // what if the field is Id?
 
                         // if (fieldValue != null || isChanged)
                         if (fieldValue != null)
