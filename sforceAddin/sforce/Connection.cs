@@ -15,6 +15,7 @@ namespace sforceAddin.sforce
         private SFSession session;
         private string instanceName;
         private bool isActive;
+        public List<sforce.SObjectEntryBase> SObjects { get; set; }
 
         public Connection(SFSession session)
         {

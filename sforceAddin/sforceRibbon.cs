@@ -202,11 +202,11 @@ namespace sforceAddin
             Cursor.Current = curCursor;
         }
 
-        private void btn_taskPane_Click(object sender, RibbonControlEventArgs e)
+        private void btn_ShowHideTaskPane_Click(object sender, RibbonControlEventArgs e)
         {
             if (taskPane == null)
             {
-                btn_taskPane.Enabled = false;
+                btn_ShowHideTaskPane.Enabled = false;
                 return;
             }
 
@@ -220,7 +220,7 @@ namespace sforceAddin
             //}
         }
 
-        private void btn_load_Click(object sender, RibbonControlEventArgs e)
+        private void btn_LoadData_Click(object sender, RibbonControlEventArgs e)
         {
             Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
 
@@ -320,7 +320,7 @@ namespace sforceAddin
             hostListObject.RefreshDataRows();
         }
 
-        private void btn_Commit_Changes(object sender, RibbonControlEventArgs e)
+        private void btn_CommitChanges_Click(object sender, RibbonControlEventArgs e)
         {
             System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
 
@@ -353,7 +353,9 @@ namespace sforceAddin
             }
         }
 
-        private void loadTable_btn_Click(object sender, RibbonControlEventArgs e)
+
+        private UI.SObjectTreeViewControl treeView;
+        private void btn_LoadTables_Click(object sender, RibbonControlEventArgs e)
         {
             sforce.Connection curConn = sforce.ConnectionManager.Instance.ActiveConnection;
             if (curConn == null)
@@ -382,8 +384,14 @@ namespace sforceAddin
 
             List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
 
-            UI.SObjectTreeViewControl treeView = new UI.SObjectTreeViewControl();
+            if (treeView == null)
+            {
+                treeView = new UI.SObjectTreeViewControl();
+            }
+
             treeView.tv_sobjs.BeginUpdate();
+
+            treeView.tv_sobjs.Nodes.Clear();
 
             treeView.tv_sobjs.Nodes.Add("SObjects");
             treeView.tv_sobjs.Nodes.Add("Custom Settings");
@@ -394,20 +402,24 @@ namespace sforceAddin
                 // node.Collapse();
                 // treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
 
+                UI.SObjectNode node = new UI.SObjectNode(item, null);
                 if (item.IsCustomSetting)
                 {
-                    treeView.tv_sobjs.Nodes[1].Nodes.Add(new UI.SObjectNode(item, null));
+                    treeView.tv_sobjs.Nodes[1].Nodes.Add(node);
                 }
                 else
                 {
-                    treeView.tv_sobjs.Nodes[0].Nodes.Add(new UI.SObjectNode(item, null));
+                    treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
                 }
             }
 
             treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
             treeView.tv_sobjs.EndUpdate();
 
-            taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+            if (taskPane == null)
+            {
+                taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+            }
             taskPane.Visible = true;
             taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
 
@@ -416,10 +428,10 @@ namespace sforceAddin
 
             Cursor.Current = oldCursor;
 
-            btn_taskPane.Enabled = true;
+            btn_ShowHideTaskPane.Enabled = true;
         }
 
-        private void gallery_login_Click(object sender, RibbonControlEventArgs e)
+        private void gallery_AuthOrg_Click(object sender, RibbonControlEventArgs e)
         {
             RibbonGallery gallery = sender as RibbonGallery;
             if (gallery == null)
@@ -441,7 +453,7 @@ namespace sforceAddin
 
         private bool updateOrgList(sforce.Connection conn)
         {
-            RibbonDropDownItem newItem = this.dropDown_org.Items.FirstOrDefault(item => item.Label == conn.InstanceName);
+            RibbonDropDownItem newItem = this.dropDown_TargetOrg.Items.FirstOrDefault(item => item.Label == conn.InstanceName);
             if (newItem != null)
             {
                 conn = sforce.ConnectionManager.Instance.FindConnection(conn.InstanceName);
@@ -451,13 +463,13 @@ namespace sforceAddin
                 newItem = Factory.CreateRibbonDropDownItem();
                 newItem.Label = conn.InstanceName;
 
-                this.dropDown_org.Items.Add(newItem);
+                this.dropDown_TargetOrg.Items.Add(newItem);
             }
 
             // conn.Active();
             // this.dropDown_org.SelectedItem = newItem;
 
-            if (this.dropDown_org.Items.Count == 1)
+            if (this.dropDown_TargetOrg.Items.Count == 1)
             {
                 conn.Active((con) => {
                     if (sfClient == null)
@@ -470,10 +482,17 @@ namespace sforceAddin
 
             }
 
+            // enable buttons
+            // this.dropDown_TargetOrg.Enabled = true;
+            this.btn_LoadTables.Enabled = true;
+            this.btn_ShowHideTaskPane.Enabled = true;
+            this.btn_CommitChanges.Enabled = true;
+            this.btn_CopySelection.Enabled = true;
+
             return true;
         }
 
-        private void dropDown_org_SelectionChanged(object sender, RibbonControlEventArgs e)
+        private void dropDown_TargetOrg_SelectionChanged(object sender, RibbonControlEventArgs e)
         {
             RibbonDropDown dropDown = sender as RibbonDropDown;
             if (dropDown == null)

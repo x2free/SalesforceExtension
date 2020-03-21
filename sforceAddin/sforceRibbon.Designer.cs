@@ -38,17 +38,17 @@
             Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl2 = this.Factory.CreateRibbonDropDownItem();
             this.sfRibbonTab = this.Factory.CreateRibbonTab();
             this.grp_auth = this.Factory.CreateRibbonGroup();
-            this.dropDown_org = this.Factory.CreateRibbonDropDown();
-            this.loadTable_btn = this.Factory.CreateRibbonButton();
-            this.btn_taskPane = this.Factory.CreateRibbonButton();
+            this.dropDown_TargetOrg = this.Factory.CreateRibbonDropDown();
+            this.btn_LoadTables = this.Factory.CreateRibbonButton();
+            this.btn_ShowHideTaskPane = this.Factory.CreateRibbonButton();
             this.grp_data = this.Factory.CreateRibbonGroup();
-            this.btn_load = this.Factory.CreateRibbonButton();
+            this.btn_loadData = this.Factory.CreateRibbonButton();
             this.btn_CommitChanges = this.Factory.CreateRibbonButton();
             this.btn_CopySelection = this.Factory.CreateRibbonButton();
             this.grp_config = this.Factory.CreateRibbonGroup();
             this.editbox_APIVersion = this.Factory.CreateRibbonEditBox();
             this.buttonGroup1 = this.Factory.CreateRibbonButtonGroup();
-            this.gallery_addOrg = this.Factory.CreateRibbonGallery();
+            this.gallery_AuthOrg = this.Factory.CreateRibbonGallery();
             this.sfRibbonTab.SuspendLayout();
             this.grp_auth.SuspendLayout();
             this.grp_data.SuspendLayout();
@@ -66,53 +66,58 @@
             // 
             // grp_auth
             // 
-            this.grp_auth.Items.Add(this.dropDown_org);
-            this.grp_auth.Items.Add(this.loadTable_btn);
-            this.grp_auth.Items.Add(this.btn_taskPane);
+            this.grp_auth.Items.Add(this.dropDown_TargetOrg);
+            this.grp_auth.Items.Add(this.btn_LoadTables);
+            this.grp_auth.Items.Add(this.btn_ShowHideTaskPane);
             this.grp_auth.Label = "Auth";
             this.grp_auth.Name = "grp_auth";
             // 
-            // dropDown_org
+            // dropDown_TargetOrg
             // 
-            this.dropDown_org.Label = "Org";
-            this.dropDown_org.Name = "dropDown_org";
-            this.dropDown_org.SizeString = "MMMMMMMMMMM";
-            this.dropDown_org.SelectionChanged += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.dropDown_org_SelectionChanged);
+            this.dropDown_TargetOrg.Label = "Target Org";
+            this.dropDown_TargetOrg.Name = "dropDown_TargetOrg";
+            this.dropDown_TargetOrg.SizeString = "MMMMMMMMMMM";
+            this.dropDown_TargetOrg.SelectionChanged += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.dropDown_TargetOrg_SelectionChanged);
             // 
-            // loadTable_btn
+            // btn_LoadTables
             // 
-            this.loadTable_btn.Label = "Load Tables";
-            this.loadTable_btn.Name = "loadTable_btn";
-            this.loadTable_btn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.loadTable_btn_Click);
+            this.btn_LoadTables.Enabled = false;
+            this.btn_LoadTables.Label = "Load Tables";
+            this.btn_LoadTables.Name = "btn_LoadTables";
+            this.btn_LoadTables.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_LoadTables_Click);
             // 
-            // btn_taskPane
+            // btn_ShowHideTaskPane
             // 
-            this.btn_taskPane.Label = "Show/Hide Task Pane";
-            this.btn_taskPane.Name = "btn_taskPane";
-            this.btn_taskPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_taskPane_Click);
+            this.btn_ShowHideTaskPane.Enabled = false;
+            this.btn_ShowHideTaskPane.Label = "Show/Hide Task Pane";
+            this.btn_ShowHideTaskPane.Name = "btn_ShowHideTaskPane";
+            this.btn_ShowHideTaskPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_ShowHideTaskPane_Click);
             // 
             // grp_data
             // 
-            this.grp_data.Items.Add(this.btn_load);
+            this.grp_data.Items.Add(this.btn_loadData);
             this.grp_data.Items.Add(this.btn_CommitChanges);
             this.grp_data.Items.Add(this.btn_CopySelection);
             this.grp_data.Label = "Data";
             this.grp_data.Name = "grp_data";
             // 
-            // btn_load
+            // btn_loadData
             // 
-            this.btn_load.Label = "Load Data";
-            this.btn_load.Name = "btn_load";
-            this.btn_load.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_load_Click);
+            this.btn_loadData.Enabled = false;
+            this.btn_loadData.Label = "Load Data";
+            this.btn_loadData.Name = "btn_loadData";
+            this.btn_loadData.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_LoadData_Click);
             // 
             // btn_CommitChanges
             // 
+            this.btn_CommitChanges.Enabled = false;
             this.btn_CommitChanges.Label = "Commit Changes";
             this.btn_CommitChanges.Name = "btn_CommitChanges";
-            this.btn_CommitChanges.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_Commit_Changes);
+            this.btn_CommitChanges.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CommitChanges_Click);
             // 
             // btn_CopySelection
             // 
+            this.btn_CopySelection.Enabled = false;
             this.btn_CopySelection.Label = "Copy Selection";
             this.btn_CopySelection.Name = "btn_CopySelection";
             this.btn_CopySelection.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CopySelection_Click);
@@ -133,19 +138,19 @@
             // 
             // buttonGroup1
             // 
-            this.buttonGroup1.Items.Add(this.gallery_addOrg);
+            this.buttonGroup1.Items.Add(this.gallery_AuthOrg);
             this.buttonGroup1.Name = "buttonGroup1";
             // 
-            // gallery_addOrg
+            // gallery_AuthOrg
             // 
             ribbonDropDownItemImpl1.Label = "Sandbox";
             ribbonDropDownItemImpl2.Label = "Production";
-            this.gallery_addOrg.Items.Add(ribbonDropDownItemImpl1);
-            this.gallery_addOrg.Items.Add(ribbonDropDownItemImpl2);
-            this.gallery_addOrg.Label = "+Auth an Org";
-            this.gallery_addOrg.Name = "gallery_addOrg";
-            this.gallery_addOrg.RowCount = 2;
-            this.gallery_addOrg.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.gallery_login_Click);
+            this.gallery_AuthOrg.Items.Add(ribbonDropDownItemImpl1);
+            this.gallery_AuthOrg.Items.Add(ribbonDropDownItemImpl2);
+            this.gallery_AuthOrg.Label = "+Auth an Org";
+            this.gallery_AuthOrg.Name = "gallery_AuthOrg";
+            this.gallery_AuthOrg.RowCount = 2;
+            this.gallery_AuthOrg.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.gallery_AuthOrg_Click);
             // 
             // sforceRibbon
             // 
@@ -171,16 +176,16 @@
 
         internal Microsoft.Office.Tools.Ribbon.RibbonTab sfRibbonTab;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_auth;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_taskPane;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_ShowHideTaskPane;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_data;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_load;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_loadData;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CommitChanges;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton loadTable_btn;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_LoadTables;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grp_config;
         internal Microsoft.Office.Tools.Ribbon.RibbonEditBox editbox_APIVersion;
         internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
-        internal Microsoft.Office.Tools.Ribbon.RibbonGallery gallery_addOrg;
-        internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown_org;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGallery gallery_AuthOrg;
+        internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown_TargetOrg;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CopySelection;
     }
 

@@ -69,9 +69,18 @@ namespace sforceAddin.sforce
             //return false;
         }
 
-        public List<SObjectEntryBase> getSObjects()
+        public List<SObjectEntryBase> getSObjects(bool force = false)
         {
-            List<sforce.SObjectEntryBase> sobjects = new List<sforce.SObjectEntryBase>();
+            // cache objects
+            List<sforce.SObjectEntryBase> sobjects = ConnectionManager.Instance.ActiveConnection.SObjects == null
+                        ? new List<SObjectEntryBase>() : ConnectionManager.Instance.ActiveConnection.SObjects;
+            if (!force && sobjects.Any())
+            {
+                return sobjects;
+            }
+
+            sobjects.Clear();
+
             // get SObjects
             // Make the describeGlobal() call 
             DescribeGlobalResult globalDesc = sfSvc.describeGlobal();
@@ -87,7 +96,8 @@ namespace sforceAddin.sforce
                 }
             }
 
-            sobjects.Sort();
+            sobjects.Sort((a, b) => { return string.Compare(a.Label, b.Label); });
+            ConnectionManager.Instance.ActiveConnection.SObjects = sobjects;
 
             return sobjects;
         }

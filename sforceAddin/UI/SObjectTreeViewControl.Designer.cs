@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.tv_sobjs = new System.Windows.Forms.TreeView();
+            this.components.Add(tv_sobjs);
             this.SuspendLayout();
             // 
             // tv_sobjs
