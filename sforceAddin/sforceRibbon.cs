@@ -486,6 +486,7 @@ namespace sforceAddin
             // this.dropDown_TargetOrg.Enabled = true;
             this.btn_LoadTables.Enabled = true;
             this.btn_ShowHideTaskPane.Enabled = true;
+            this.btn_loadData.Enabled = true;
             this.btn_CommitChanges.Enabled = true;
             this.btn_CopySelection.Enabled = true;
 
