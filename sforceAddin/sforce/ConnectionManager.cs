@@ -30,15 +30,15 @@ namespace sforceAddin.sforce
             this.Connections.Add(connection);
             // }
 
-            if (connection.IsActive)
-            {
-                foreach (var con in this.Connections)
-                {
-                    con.Deactive();
-                }
-            }
+            //if (connection.IsActive)
+            //{
+            //    foreach (var con in this.Connections)
+            //    {
+            //        con.Deactive();
+            //    }
+            //}
 
-            this.Connections.Add(connection);
+            //this.Connections.Add(connection);
 
             //if (callback != null)
             //{

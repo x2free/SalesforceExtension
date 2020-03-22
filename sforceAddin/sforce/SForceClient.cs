@@ -69,6 +69,11 @@ namespace sforceAddin.sforce
             //return false;
         }
 
+        public void logout()
+        {
+            sfSvc.logout();
+        }
+
         public List<SObjectEntryBase> getSObjects(bool force = false)
         {
             // cache objects

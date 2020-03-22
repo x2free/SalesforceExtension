@@ -25,6 +25,17 @@ namespace sforceAddin
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
+            if (sforce.ConnectionManager.Instance.Connections == null || sforce.ConnectionManager.Instance.Connections.Count() == 0)
+            {
+                return;
+            }
+
+            sforce.SForceClient client = new sforce.SForceClient();
+            foreach (sforce.Connection con in sforce.ConnectionManager.Instance.Connections)
+            {
+                client.init(con.Session);
+                client.logout();
+            }
         }
 
         #region VSTO generated code
