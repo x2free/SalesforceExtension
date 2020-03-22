@@ -512,14 +512,14 @@ namespace sforceAddin
             });
         }
 
-        private void apiVersion_TextChanged(object sender, RibbonControlEventArgs e)
+        private bool apiVersion_Changed(string version)
         {
-            double version = 0;
-            bool ret = double.TryParse(this.editbox_APIVersion.Text, out version);
+            double versionNum = 0;
+            bool ret = double.TryParse(version, out versionNum);
             if (ret)
             {
-                Auth.AuthUtil.apiVersion = (int)version;
-                this.editbox_APIVersion.Text = string.Format("{0}.0", Auth.AuthUtil.apiVersion);
+                Auth.AuthUtil.apiVersion = (int)versionNum;
+                // this.editbox_APIVersion.Text = string.Format("{0}.0", Auth.AuthUtil.apiVersion);
 
 
                 //if (sfClient == null)
@@ -536,8 +536,17 @@ namespace sforceAddin
                 {
                     sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
                 }
+
+                return true;
             }
+
+            return false;
         }
+
+        //private void apiVersion_TextChanged(object sender, RibbonControlEventArgs e)
+        //{
+        //    apiVersion_Changed(this.editbox_APIVersion.Text);
+        //}
 
         private void btn_CopySelection_Click(object sender, RibbonControlEventArgs e)
         {
@@ -596,6 +605,18 @@ namespace sforceAddin
 
             //}
 
+        }
+
+        private UI.ConfigForm configForm;
+        private void btn_Config_Click(object sender, RibbonControlEventArgs e)
+        {
+            if (configForm == null)
+            {
+                configForm = new UI.ConfigForm();
+                configForm.APIVersionChnagedHandler += apiVersion_Changed;
+            }
+
+            configForm.ShowDialog();
         }
     }
 }
