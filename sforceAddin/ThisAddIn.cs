@@ -13,14 +13,14 @@ namespace sforceAddin
     {
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            // AppDomain.CurrentDomain.UnhandledException +=
+            //AppDomain.CurrentDomain.UnhandledException +=
             //    (s, ev) => { System.Windows.Forms.MessageBox.Show(ev.ToString(), "sforce Addin Unhandled Exception", System.Windows.Forms.MessageBoxButtons.OK); };
 
-            AppDomain.CurrentDomain.FirstChanceException +=
-                (obj, ex) => {
-                        System.Windows.Forms.MessageBox.Show(ex.Exception.Message, "sforce Addin Unhandled Exception"
-                                , System.Windows.Forms.MessageBoxButtons.OK);
-                };
+            //AppDomain.CurrentDomain.FirstChanceException +=
+            //    (obj, ex) => {
+            //            System.Windows.Forms.MessageBox.Show(ex.Exception.Message, "sforce Addin Unhandled Exception"
+            //                    , System.Windows.Forms.MessageBoxButtons.OK);
+            //    };
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
