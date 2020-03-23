@@ -14,6 +14,11 @@ namespace sforceAddin.UI
     {
         public SObjectTreeViewControl()
         {
+            if (this.components == null)
+            {
+                this.components = new System.ComponentModel.Container();
+            }
+
             InitializeComponent();
         }
     }

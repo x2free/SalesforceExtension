@@ -206,8 +206,10 @@ namespace sforceAddin
         {
             if (taskPane == null)
             {
-                btn_ShowHideTaskPane.Enabled = false;
-                return;
+                //btn_ShowHideTaskPane.Enabled = false;
+                //return;
+                taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+                taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
             }
 
             taskPane.Visible = !taskPane.Visible;
@@ -354,7 +356,7 @@ namespace sforceAddin
         }
 
 
-        private UI.SObjectTreeViewControl treeView;
+        private UI.SObjectTreeViewControl treeView = new UI.SObjectTreeViewControl();
         private void btn_LoadTables_Click(object sender, RibbonControlEventArgs e)
         {
             sforce.Connection curConn = sforce.ConnectionManager.Instance.ActiveConnection;
@@ -367,11 +369,7 @@ namespace sforceAddin
 
             if (sfClient == null)
             {
-                if (sfClient == null)
-                {
-                    sfClient = new sforce.SForceClient();
-                }
-
+                sfClient = new sforce.SForceClient();
                 sfClient.init(curConn.Session);
             }
 
@@ -384,11 +382,30 @@ namespace sforceAddin
 
             List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
 
-            if (treeView == null)
-            {
-                treeView = new UI.SObjectTreeViewControl();
-            }
+            //if (treeView == null)
+            //{
+            //    treeView = new UI.SObjectTreeViewControl();
+            //}
 
+            FufillTreeviewWithSObjectList(treeView, sobjectList);
+
+            if (taskPane == null)
+            {
+                taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+                taskPane.Visible = true;
+            }
+            // taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
+
+
+            // taskPane.VisibleChanged += TaskPane_VisibleChanged;
+
+            Cursor.Current = oldCursor;
+
+            btn_ShowHideTaskPane.Enabled = true;
+        }
+
+        private void FufillTreeviewWithSObjectList(UI.SObjectTreeViewControl treeView, List<sforce.SObjectEntryBase> sobjectList)
+        {
             treeView.tv_sobjs.BeginUpdate();
 
             treeView.tv_sobjs.Nodes.Clear();
@@ -414,21 +431,37 @@ namespace sforceAddin
             }
 
             treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
+            treeView.tv_sobjs.NodeMouseClick += Tv_sobjs_NodeMouseClick;
             treeView.tv_sobjs.EndUpdate();
+        }
 
-            if (taskPane == null)
+        private void Tv_sobjs_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
             {
-                taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+                ContextMenuStrip rightClickMenu = new ContextMenuStrip();
+                rightClickMenu.Items.Add("Reload", null, (o, ev) =>
+                            {
+                                ToolStripItem item = o as ToolStripItem;
+                                if (item != null)
+                                {
+                                    ContextMenuStrip cxtMenuStrip = item.Owner as ContextMenuStrip;
+
+                                    if (cxtMenuStrip != null)
+                                    {
+                                        var obj = cxtMenuStrip.SourceControl;
+                                        TreeView tv = obj as TreeView;
+
+                                        TreeNode node = tv.GetNodeAt(e.X, e.Y);
+
+                                    }
+                                }
+                                MessageBox.Show(o.ToString() + "====" + ev.ToString());
+
+                            });
+                rightClickMenu.Show(sender as Control, new System.Drawing.Point(e.X, e.Y));
+                return;
             }
-            taskPane.Visible = true;
-            taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
-
-
-            // taskPane.VisibleChanged += TaskPane_VisibleChanged;
-
-            Cursor.Current = oldCursor;
-
-            btn_ShowHideTaskPane.Enabled = true;
         }
 
         private void gallery_AuthOrg_Click(object sender, RibbonControlEventArgs e)
@@ -500,6 +533,9 @@ namespace sforceAddin
             {
                 return;
             }
+
+            sforce.ConnectionManager.Instance.ActiveConnection.Deactive();
+
             string orgName = dropDown.SelectedItem.Label;
             sforce.Connection conn = sforce.ConnectionManager.Instance.FindConnection(orgName);
             conn.Active((con) => {
@@ -509,6 +545,8 @@ namespace sforceAddin
                 }
 
                 sfClient.init(con.Session);
+
+                FufillTreeviewWithSObjectList(this.treeView, con.SObjects);
             });
         }
 

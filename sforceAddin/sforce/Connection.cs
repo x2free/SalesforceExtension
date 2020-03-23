@@ -52,7 +52,7 @@ namespace sforceAddin.sforce
 
         public void Deactive(Action<Connection> callback = null)
         {
-            this.IsActive = false;
+            this.isActive = false;
             if (callback != null)
             {
                 callback(this);
