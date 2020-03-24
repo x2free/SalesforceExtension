@@ -51,6 +51,7 @@ namespace sforceAddin.Auth
             if (!this.isStarted)
             {
                 this.server.Start();
+
                 this.isStarted = true;
             }
             // Console.WriteLine("Listening on port " + port);
@@ -61,6 +62,8 @@ namespace sforceAddin.Auth
             while (this.isStarted)
             {
                 TcpClient client = server.AcceptTcpClient();
+                client.ReceiveTimeout = 1000 * 3;
+                
                 NetworkStream netStream = client.GetStream();
                 byte[] buffer = new byte[1024 * 4];
                 int length = netStream.Read(buffer, 0, 4096);
@@ -130,58 +133,63 @@ namespace sforceAddin.Auth
 
                 try
                 {
-                    var response = (System.Net.HttpWebResponse)request.GetResponse();
-                    var responseString = new System.IO.StreamReader(response.GetResponseStream()).ReadToEnd();
-                    XmlDocument doc = new XmlDocument();
-                    doc.LoadXml(responseString);
+                    using (var response = (System.Net.HttpWebResponse)request.GetResponse())
+                    {
+                        var responseString = new System.IO.StreamReader(response.GetResponseStream()).ReadToEnd();
 
-                    XmlSerializer xs = new XmlSerializer(typeof(OAuth));
-                    OAuth oAuthObj = (OAuth)xs.Deserialize(new StringReader(responseString));
+                        XmlDocument doc = new XmlDocument();
+                        doc.LoadXml(responseString);
 
-                    // sforce.SFSession sfSession = sforce.SFSession.GetSession();
-                    sforce.SFSession sfSession = new sforce.SFSession();
-                    sfSession.SessionId = oAuthObj.access_token;
-                    sfSession.Signature = oAuthObj.signature;
-                    sfSession.Id = oAuthObj.id;
-                    sfSession.IdToken = oAuthObj.id_token;
-                    sfSession.InstanceUrl = oAuthObj.instance_url;
-                    sfSession.IssuedAt = oAuthObj.issued_at;
-                    sfSession.Scope = oAuthObj.scope;
-                    sfSession.TokenType = oAuthObj.token_type;
-                    sfSession.ApiVersion = AuthUtil.apiVersion;
-                    sfSession.IsValid = true;
+                        XmlSerializer xs = new XmlSerializer(typeof(OAuth));
+                        OAuth oAuthObj = (OAuth)xs.Deserialize(new StringReader(responseString));
 
-                    sforce.Connection connection = new sforce.Connection(sfSession);
-                    sforce.ConnectionManager.Instance.AddConnection(connection);
+                        // sforce.SFSession sfSession = sforce.SFSession.GetSession();
+                        sforce.SFSession sfSession = new sforce.SFSession();
+                        sfSession.SessionId = oAuthObj.access_token;
+                        sfSession.Signature = oAuthObj.signature;
+                        sfSession.Id = oAuthObj.id;
+                        sfSession.IdToken = oAuthObj.id_token;
+                        sfSession.InstanceUrl = oAuthObj.instance_url;
+                        sfSession.IssuedAt = oAuthObj.issued_at;
+                        sfSession.Scope = oAuthObj.scope;
+                        sfSession.TokenType = oAuthObj.token_type;
+                        sfSession.ApiVersion = AuthUtil.apiVersion;
+                        sfSession.IsValid = true;
 
-                    // response
-                    string statusLine = "HTTP/1.1 200 OK\r\n";
-                    string resBody = string.Format(@"<html>
+                        sforce.Connection connection = new sforce.Connection(sfSession);
+                        sforce.ConnectionManager.Instance.AddConnection(connection);
+
+                        // response
+                        string statusLine = "HTTP/1.1 200 OK\r\n";
+                        string resBody = string.Format(@"<html>
                                             <head>
                                                 <title>Authenticiation</title>
                                             </head>
                                             <body>Login successfuly, you may close browser now.</body>
                                         </html>", DateTime.Now);
-                    string resHeader = string.Format("Content-type:text/html;charset=utf-8\r\nContent-Lenght:{0}\r\n", resBody.Length);
-                    byte[] resBodyBytes = Encoding.UTF8.GetBytes(resBody);
-                    byte[] statusLineBytes = Encoding.UTF8.GetBytes(statusLine);
-                    byte[] resHeaderBytes = Encoding.UTF8.GetBytes(resHeader);
+                        string resHeader = string.Format("Content-type:text/html;charset=utf-8\r\nContent-Lenght:{0}\r\n", resBody.Length);
+                        byte[] resBodyBytes = Encoding.UTF8.GetBytes(resBody);
+                        byte[] statusLineBytes = Encoding.UTF8.GetBytes(statusLine);
+                        byte[] resHeaderBytes = Encoding.UTF8.GetBytes(resHeader);
 
-                    netStream.Write(statusLineBytes, 0, statusLineBytes.Length);
-                    netStream.Write(resHeaderBytes, 0, resHeaderBytes.Length);
-                    netStream.Write(new byte[] { 13, 10 }, 0, 2); // ??
-                    netStream.Write(resBodyBytes, 0, resBodyBytes.Length);
+                        netStream.Write(statusLineBytes, 0, statusLineBytes.Length);
+                        netStream.Write(resHeaderBytes, 0, resHeaderBytes.Length);
+                        netStream.Write(new byte[] { 13, 10 }, 0, 2); // ??
+                        netStream.Write(resBodyBytes, 0, resBodyBytes.Length);
 
-                    if (this.callback != null)
-                    {
-                        this.callback(connection);
+                        if (this.callback != null)
+                        {
+                            this.callback(connection);
+                        }
+
+                        netStream.Close();
+                        netStream.Dispose();
+                        client.Close();
+
+                        this.server.Stop();
+                        this.isStarted = false;
+                        break;
                     }
-
-                    client.Close();
-                    this.server.Stop();
-                    this.isStarted = false;
-
-                    break;
                 }
                 catch (System.Net.WebException ex)
                 {
