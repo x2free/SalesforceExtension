@@ -7,9 +7,9 @@ using System.Security;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("sforceAddin")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Microsoft Excel Addin for Salesforce to manipulate data.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("x2free")]
 [assembly: AssemblyProduct("sforceAddin")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
