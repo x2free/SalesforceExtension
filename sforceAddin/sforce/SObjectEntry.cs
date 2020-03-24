@@ -33,7 +33,7 @@ namespace sforceAddin.sforce
         /// <summary>
         /// Related tables. Only used for SObject, not for Custom Setting
         /// </summary>
-        public List<SObjectEntryBase> SubSObjects;
+        public List<SObjectEntryBase> Children { get; private set; }
 
         private SForceClient sfClient;
 
@@ -61,9 +61,14 @@ namespace sforceAddin.sforce
             return -1;
         }
 
-        public List<SObjectEntryBase> getChildren()
+        public List<SObjectEntryBase> LoadChildren(bool force = false)
         {
-            return this.sfClient.describeSObject(this);
+            if (force || this.Children == null)
+            {
+                this.Children = this.sfClient.describeSObject(this);
+            }
+
+            return this.Children;
         }
     }
 

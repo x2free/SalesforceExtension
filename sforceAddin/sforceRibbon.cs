@@ -19,10 +19,13 @@ namespace sforceAddin
         sforce.SForceClient sfClient;
         // System.Data.DataTable dt;
         System.Data.DataSet ds = new System.Data.DataSet();
+        private UI.SObjectTreeViewControl treeView;
 
         private void sforceRibbon_Load(object sender, RibbonUIEventArgs e)
         {
-
+            treeView = new UI.SObjectTreeViewControl();
+            treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
+            treeView.tv_sobjs.NodeMouseClick += Tv_sobjs_NodeMouseClick;
         }
 
 
@@ -196,7 +199,14 @@ namespace sforceAddin
 
             if (node != null) //eg, root node
             {
-                node.dbClick();
+                node.LoadNode();
+            }
+            // root node wihout children
+            else if (e.Node is TreeNode && e.Node.Parent == null && e.Node.Nodes.Count == 0)
+            {
+                TreeNode root = e.Node as TreeNode;
+                List<sforce.SObjectEntryBase> sobjList =  sfClient.getSObjects();
+                ExpandNode(root, sobjList, true);
             }
 
             Cursor.Current = curCursor;
@@ -224,115 +234,141 @@ namespace sforceAddin
 
         private void btn_LoadData_Click(object sender, RibbonControlEventArgs e)
         {
-            Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
-
-
-            Microsoft.Office.Interop.Excel.ListObject listObj = null;
-            foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
+            Cursor curCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            try
             {
-                if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
+
+                Microsoft.Office.Interop.Excel.ListObject listObj = null;
+                foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
                 {
-                    listObj = obj;
-                    break;
+                    if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        listObj = obj;
+                        break;
+                    }
                 }
-            }
 
-            if (listObj == null)
+                if (listObj == null)
+                {
+                    return;
+                }
+
+                // string tableName = listObj.DisplayName;
+                string tableName = listObj.Name;
+                StringBuilder sb = new StringBuilder();
+
+                //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
+                //{
+                //    sb.AppendFormat("{0},", col.Name);
+                //}
+                List<string> columnNameList = new List<string>();
+
+                foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+                {
+                    // sb2.AppendFormat("{0},", headerCell.Name.Name);
+                    var v1 = headerCell.Name;
+                    var v2 = headerCell.Name.Name;
+                    sb.AppendFormat("{0},", headerCell.Name.Name.Substring(listObj.Name.Length + 1));
+
+                    columnNameList.Add(headerCell.Name.Name.Replace('.', '_'));
+                }
+
+                // get text instead of API names
+                //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
+                //{
+                //    sb.AppendFormat("{0},", col.Name);
+                //}
+
+                //foreach (Microsoft.Office.Interop.Excel.Name item in sheet.Names)
+                //{
+
+                //}
+
+                //List<string> columnNameList = new List<string>();
+                //foreach (Microsoft.Office.Interop.Excel.Name item in Globals.ThisAddIn.Application.Names)
+                //{
+                //    if (item.Name != null && item.Name.StartsWith(listObj.Name))
+                //    {
+                //        sb.AppendFormat("{0},", item.Name.Substring(listObj.Name.Length + 1));
+
+                //        columnNameList.Add(item.Name.Replace('.', '_'));
+                //    }
+                //}
+
+                //foreach (Microsoft.Office.Interop.Excel.Range cell in listObj.HeaderRowRange)
+                //{
+                //    Microsoft.Office.Interop.Excel.Name name = (Microsoft.Office.Interop.Excel.Name)cell.Name;
+                //    sb.AppendFormat("{0},", name.Name.Substring(listObj.Name.Length + 1));
+                //}
+
+
+                sb.Remove(sb.Length - 1, 1);
+                string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
+
+                System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[tableName];
+                bool isTableExist = dt != null;
+                dt = sfClient.execQuery(queryStr, tableName, dt);
+
+                if (dt == null)
+                {
+                    MessageBox.Show("No Data loaded", "sforce Addin", System.Windows.Forms.MessageBoxButtons.OK);
+                    return;
+                }
+
+                dt.AcceptChanges();
+
+                if (!isTableExist)
+                {
+                    ds.Tables.Add(dt);
+                }
+
+                // Microsoft.Office.Tools.Excel.ApplicationFactory factory = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
+                // Microsoft.Office.Tools.Excel.Worksheet sheet2 = (Microsoft.Office.Tools.Excel.Worksheet)Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
+                // sheet2.lis
+
+                Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
+                // hostListObject.SetDataBinding(dt, "", sb.ToString().Split(','));
+                // hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
+                hostListObject.SetDataBinding(dt);
+                hostListObject.RefreshDataRows();
+
+                Cursor.Current = curCursor;
+            }
+            catch (Exception ex)
             {
-                return;
+                Cursor.Current = curCursor;
+                MessageBox.Show(ex.Message);
             }
-
-            // string tableName = listObj.DisplayName;
-            string tableName = listObj.Name;
-            StringBuilder sb = new StringBuilder();
-
-            //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
-            //{
-            //    sb.AppendFormat("{0},", col.Name);
-            //}
-            List<string> columnNameList = new List<string>();
-
-            foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
-            {
-                // sb2.AppendFormat("{0},", headerCell.Name.Name);
-                var v1 = headerCell.Name;
-                var v2 = headerCell.Name.Name;
-                sb.AppendFormat("{0},", headerCell.Name.Name.Substring(listObj.Name.Length + 1));
-
-                columnNameList.Add(headerCell.Name.Name.Replace('.', '_'));
-            }
-
-            // get text instead of API names
-            //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
-            //{
-            //    sb.AppendFormat("{0},", col.Name);
-            //}
-
-            //foreach (Microsoft.Office.Interop.Excel.Name item in sheet.Names)
-            //{
-
-            //}
-
-            //List<string> columnNameList = new List<string>();
-            //foreach (Microsoft.Office.Interop.Excel.Name item in Globals.ThisAddIn.Application.Names)
-            //{
-            //    if (item.Name != null && item.Name.StartsWith(listObj.Name))
-            //    {
-            //        sb.AppendFormat("{0},", item.Name.Substring(listObj.Name.Length + 1));
-
-            //        columnNameList.Add(item.Name.Replace('.', '_'));
-            //    }
-            //}
-
-            //foreach (Microsoft.Office.Interop.Excel.Range cell in listObj.HeaderRowRange)
-            //{
-            //    Microsoft.Office.Interop.Excel.Name name = (Microsoft.Office.Interop.Excel.Name)cell.Name;
-            //    sb.AppendFormat("{0},", name.Name.Substring(listObj.Name.Length + 1));
-            //}
-
-
-            sb.Remove(sb.Length - 1, 1);
-            string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
-
-            System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[tableName];
-            bool isTableExist = dt != null;
-            dt = sfClient.execQuery(queryStr, tableName, dt);
-
-            if (dt == null)
-            {
-                MessageBox.Show("No Data loaded", "sforce Addin", System.Windows.Forms.MessageBoxButtons.OK);
-                return;
-            }
-
-            dt.AcceptChanges();
-
-            if (!isTableExist)
-            {
-                ds.Tables.Add(dt);
-            }
-
-            // Microsoft.Office.Tools.Excel.ApplicationFactory factory = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
-            // Microsoft.Office.Tools.Excel.Worksheet sheet2 = (Microsoft.Office.Tools.Excel.Worksheet)Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
-            // sheet2.lis
-
-            Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
-            // hostListObject.SetDataBinding(dt, "", sb.ToString().Split(','));
-            // hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
-            hostListObject.SetDataBinding(dt);
-            hostListObject.RefreshDataRows();
         }
 
         private void btn_CommitChanges_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
 
-            System.Data.DataTable updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
-            System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
-            System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
+            Cursor curCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
 
-            sfClient.doUpdate(dt);
+            try
+            {
+                System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
 
-            dt.AcceptChanges();
+                System.Data.DataTable updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
+                System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
+                System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
+
+                sfClient.doUpdate(dt);
+
+                dt.AcceptChanges();
+
+                Cursor.Current = curCursor;
+            }
+            catch (Exception ex)
+            {
+                Cursor.Current = curCursor;
+
+                MessageBox.Show(ex.Message);
+            }
 
             //updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
             //deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
@@ -355,113 +391,170 @@ namespace sforceAddin
             }
         }
 
-
-        private UI.SObjectTreeViewControl treeView = new UI.SObjectTreeViewControl();
         private void btn_LoadTables_Click(object sender, RibbonControlEventArgs e)
         {
-            sforce.Connection curConn = sforce.ConnectionManager.Instance.ActiveConnection;
-            if (curConn == null)
+            try
             {
-                curConn = sforce.ConnectionManager.Instance.Connections.First();
+                sforce.Connection curConn = sforce.ConnectionManager.Instance.ActiveConnection;
+                if (curConn == null)
+                {
+                    curConn = sforce.ConnectionManager.Instance.Connections.First();
 
-                curConn.Active();
+                    curConn.Active();
+                }
+
+                if (sfClient == null)
+                {
+                    sfClient = new sforce.SForceClient();
+                    sfClient.init(curConn.Session);
+                }
+
+                Cursor oldCursor = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+
+                //sfClient = new sforce.SForceClient();
+                //sforce.SFSession sfSession = sforce.SFSession.GetSession();
+                //bool isSucess = sfClient.login(sfSession);
+
+                List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
+
+                //if (treeView == null)
+                //{
+                //    treeView = new UI.SObjectTreeViewControl();
+                //}
+
+                FufillTreeviewWithSObjectList(treeView, sobjectList);
+
+                if (taskPane == null)
+                {
+                    taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
+                    taskPane.Visible = true;
+                    taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
+                }
+
+
+                // taskPane.VisibleChanged += TaskPane_VisibleChanged;
+
+                Cursor.Current = oldCursor;
+
+                btn_ShowHideTaskPane.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void ExpandNode(TreeNode node, List<sforce.SObjectEntryBase> sobjectList, bool expandChildren)
+        {
+            if (sobjectList == null)
+            {
+                return;
             }
 
-            if (sfClient == null)
+            node.Nodes.Clear();
+
+            foreach (var item in sobjectList)
             {
-                sfClient = new sforce.SForceClient();
-                sfClient.init(curConn.Session);
+                UI.SObjectNodeBase subNode = UI.SObjectNodeBase.CreateNode(item, node);
+                if (subNode == null)
+                {
+                    continue;
+                }
+
+                node.Nodes.Add(subNode);
+
+                if (expandChildren)
+                {
+                    ExpandNode(subNode, item.Children, expandChildren);
+                }
             }
-
-            Cursor oldCursor = Cursor.Current;
-            Cursor.Current = Cursors.WaitCursor;
-
-            //sfClient = new sforce.SForceClient();
-            //sforce.SFSession sfSession = sforce.SFSession.GetSession();
-            //bool isSucess = sfClient.login(sfSession);
-
-            List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
-
-            //if (treeView == null)
-            //{
-            //    treeView = new UI.SObjectTreeViewControl();
-            //}
-
-            FufillTreeviewWithSObjectList(treeView, sobjectList);
-
-            if (taskPane == null)
-            {
-                taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
-                taskPane.Visible = true;
-            }
-            // taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
-
-
-            // taskPane.VisibleChanged += TaskPane_VisibleChanged;
-
-            Cursor.Current = oldCursor;
-
-            btn_ShowHideTaskPane.Enabled = true;
         }
 
         private void FufillTreeviewWithSObjectList(UI.SObjectTreeViewControl treeView, List<sforce.SObjectEntryBase> sobjectList)
         {
             treeView.tv_sobjs.BeginUpdate();
-
             treeView.tv_sobjs.Nodes.Clear();
 
-            treeView.tv_sobjs.Nodes.Add("SObjects");
-            treeView.tv_sobjs.Nodes.Add("Custom Settings");
-            foreach (sforce.SObjectEntry item in sobjectList)
-            {
-                // TreeNode node = new UI.SObjectNodeBase(item.Name, item.Label, sfClient);
-                // TreeNode node = new UI.SObjectNodeBase(item, sfClient);
-                // node.Collapse();
-                // treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
+            TreeNode root = treeView.tv_sobjs.Nodes.Add("SObjects");
+            // treeView.tv_sobjs.Nodes.Add("Custom Settings");
 
-                UI.SObjectNode node = new UI.SObjectNode(item, null);
-                if (item.IsCustomSetting)
-                {
-                    treeView.tv_sobjs.Nodes[1].Nodes.Add(node);
-                }
-                else
-                {
-                    treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
-                }
-            }
+            //foreach (sforce.SObjectEntry item in sobjectList)
+            //{
+            //    // TreeNode node = new UI.SObjectNodeBase(item.Name, item.Label, sfClient);
+            //    // TreeNode node = new UI.SObjectNodeBase(item, sfClient);
+            //    // node.Collapse();
+            //    // treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
 
-            treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
-            treeView.tv_sobjs.NodeMouseClick += Tv_sobjs_NodeMouseClick;
+            //    UI.SObjectNode node = new UI.SObjectNode(item, parent);
+            //    if (item.IsCustomSetting)
+            //    {
+            //        treeView.tv_sobjs.Nodes[1].Nodes.Add(node);
+            //    }
+            //    else
+            //    {
+            //        treeView.tv_sobjs.Nodes[0].Nodes.Add(node);
+            //    }
+            //}
+            ExpandNode(root, sobjectList, true);
+
             treeView.tv_sobjs.EndUpdate();
         }
 
         private void Tv_sobjs_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button != MouseButtons.Right)
             {
-                ContextMenuStrip rightClickMenu = new ContextMenuStrip();
-                rightClickMenu.Items.Add("Reload", null, (o, ev) =>
-                            {
-                                ToolStripItem item = o as ToolStripItem;
-                                if (item != null)
-                                {
-                                    ContextMenuStrip cxtMenuStrip = item.Owner as ContextMenuStrip;
-
-                                    if (cxtMenuStrip != null)
-                                    {
-                                        var obj = cxtMenuStrip.SourceControl;
-                                        TreeView tv = obj as TreeView;
-
-                                        TreeNode node = tv.GetNodeAt(e.X, e.Y);
-
-                                    }
-                                }
-                                MessageBox.Show(o.ToString() + "====" + ev.ToString());
-
-                            });
-                rightClickMenu.Show(sender as Control, new System.Drawing.Point(e.X, e.Y));
                 return;
             }
+
+            TreeView tv = sender as TreeView;
+            TreeNode node = tv.GetNodeAt(e.X, e.Y);
+            tv.SelectedNode = node;
+
+            ContextMenuStrip rightClickMenu = new ContextMenuStrip();
+            rightClickMenu.Items.Add("Reload", null, (o, ev) =>
+                    {
+                        Cursor curCursor = Cursor.Current;
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        //ToolStripItem item = o as ToolStripItem;
+                        //if (item != null)
+                        //{
+                        //    ContextMenuStrip cxtMenuStrip = item.Owner as ContextMenuStrip;
+
+                        //    if (cxtMenuStrip != null)
+                        //    {
+                        //        var obj = cxtMenuStrip.SourceControl;
+                        //    }
+                        //}
+
+                        List<sforce.SObjectEntryBase> objList = null;
+
+                        //if (node.Parent == null)
+                        //{
+                        //    objList = sfClient.getSObjects(true);
+                        //    FufillTreeviewWithSObjectList(treeView, objList);
+                        //}
+                        //else if (node is UI.SObjectNode)
+                        //{
+                        //    (node as UI.SObjectNode).LoadNode(true);
+                        //}
+
+                        if (node.Parent == null)
+                        {
+                            objList = sfClient.getSObjects(true);
+                        }
+                        else if (node is UI.SObjectNode)
+                        {
+                            objList = sfClient.describeSObject((node as UI.SObjectNode).SObjEntry);
+                        }
+
+                        ExpandNode(node, objList, true);
+
+                        Cursor.Current = curCursor;
+                    });
+            rightClickMenu.Show(sender as Control, new System.Drawing.Point(e.X, e.Y));
         }
 
         private void gallery_AuthOrg_Click(object sender, RibbonControlEventArgs e)
@@ -534,6 +627,7 @@ namespace sforceAddin
                 return;
             }
 
+            // Deactive current session
             sforce.ConnectionManager.Instance.ActiveConnection.Deactive();
 
             string orgName = dropDown.SelectedItem.Label;
@@ -546,6 +640,7 @@ namespace sforceAddin
 
                 sfClient.init(con.Session);
 
+                // Refresh tree view
                 FufillTreeviewWithSObjectList(this.treeView, con.SObjects);
             });
         }
@@ -553,22 +648,10 @@ namespace sforceAddin
         private bool apiVersion_Changed(string version)
         {
             double versionNum = 0;
-            bool ret = double.TryParse(version, out versionNum);
-            if (ret)
+            bool isSuccess = double.TryParse(version, out versionNum);
+            if (isSuccess)
             {
                 Auth.AuthUtil.apiVersion = (int)versionNum;
-                // this.editbox_APIVersion.Text = string.Format("{0}.0", Auth.AuthUtil.apiVersion);
-
-
-                //if (sfClient == null)
-                //{
-                //    sfClient = new sforce.SForceClient();
-
-                //    if (sforce.ConnectionManager.Instance.ActiveConnection != null)
-                //    {
-                //        sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
-                //    }
-                //}
 
                 if (sfClient != null && sforce.ConnectionManager.Instance.ActiveConnection != null)
                 {
@@ -588,14 +671,10 @@ namespace sforceAddin
 
         private void btn_CopySelection_Click(object sender, RibbonControlEventArgs e)
         {
+            Cursor curCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+
             System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
-
-            System.Data.DataTable updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
-            System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
-            System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
-
-            Tools.Worksheet sheet = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveSheet);
-            Tools.ListObject listObj = Globals.Factory.GetVstoObject(sheet.ListObjects.Item[sheet.Name]);
 
             if (dt.GetChanges() != null)
             {
@@ -622,27 +701,25 @@ namespace sforceAddin
                 throw new Exception("changes????");
             }
 
-            // List<int> indexList = new List<int>();
-            foreach (Interop.Range item in ((Interop.Range)Globals.ThisAddIn.Application.Selection).Rows)
+            try
             {
-                // indexList.Add(item.Row);
+                foreach (Interop.Range item in ((Interop.Range)Globals.ThisAddIn.Application.Selection).Rows)
+                {
+                    // dt.Rows[item.Row - 2].SetModified(); // 2 = header + vsto starts from 1
+                    dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
+                }
 
-                // dt.Rows[item.Row - 2].SetModified(); // 2 = header + vsto starts from 1
-                dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
+                sfClient.doUpdate(dt);
+
+                dt.AcceptChanges();
+
+                Cursor.Current = curCursor;
             }
-
-
-            // updatedTable = dt.GetChanges(System.Data.DataRowState.Added);
-            // sfClient.doUpdate(updatedTable);
-            sfClient.doUpdate(dt);
-
-            dt.AcceptChanges();
-
-            //foreach (Interop.Range range in ranges)
-            //{
-
-            //}
-
+            catch (Exception ex)
+            {
+                Cursor.Current = curCursor;
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private UI.ConfigForm configForm;

@@ -77,7 +77,8 @@ namespace sforceAddin.Auth
                 // var newLinesRegex = new Regex(@"\r\n|\n|\r", RegexOptions.Singleline);
                 // var lines = newLinesRegex.Split(reqString);
 
-                string pattern = @"code=(?<code>\S*?)( |&state=(?<state>\S*)).+?\sReferer: (?<referer>\S*)";
+                // string pattern = @"code=(?<code>\S*?)( |&state=(?<state>\S*)).+?\sReferer: (?<referer>\S*)"; // On IE, no referer???
+                string pattern = @"code=(?<code>\S*?)( |&state=(?<state>\S*)).+?";
                 Regex rx = new Regex(pattern, RegexOptions.Singleline);
                 Match m = rx.Match(reqString);
                 string code = string.Empty, state = string.Empty, referer = string.Empty;
@@ -85,7 +86,7 @@ namespace sforceAddin.Auth
                 {
                     code = m.Groups["code"].Success ? m.Groups["code"].Value : "";
                     state = m.Groups["state"].Success ? m.Groups["state"].Value : "";
-                    referer = m.Groups["referer"].Success ? m.Groups["referer"].Value : "";
+                    // referer = m.Groups["referer"].Success ? m.Groups["referer"].Value : "";
                 }
                 else
                 {
@@ -111,7 +112,7 @@ namespace sforceAddin.Auth
                 //{
                 //    request.Headers[key] = context.Request.Headers[key];
                 //}
-
+                 
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";// grant type not supported
                 request.ContentLength = data.Length;

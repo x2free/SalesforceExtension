@@ -16,16 +16,16 @@ namespace sforceAddin.UI
         /// SForceClient object, to integration with Salesforce
         /// </summary>
         // protected sforce.SForceClient sfClient;
+
         /// <summary>
         /// Sub nodes, eg, fields of an SOject
         /// </summary>
-        /// private List<SObjectNodeBase> subNodes;
+        // protected List<SObjectNodeBase> subNodes;
 
         /// <summary>
         /// SObject binding to this node
         /// </summary>
-        protected sforce.SObjectEntryBase sobjEntry;
-
+        public sforce.SObjectEntryBase SObjEntry { get; private set; }
         /// <summary>
         /// Parent node
         /// </summary>
@@ -51,14 +51,28 @@ namespace sforceAddin.UI
 
             //}
 
-            this.sobjEntry = sobj;
+            this.SObjEntry = sobj;
         }
 
         /// <summary>
         /// Determine if <sobjeEntry> has sub entrys
         /// </summary>
-        abstract public void dbClick();
+        abstract public void LoadNode(bool force = false);
 
+        public static SObjectNodeBase CreateNode(sforce.SObjectEntryBase entry, TreeNode parent)
+        {
+            SObjectNodeBase node = null;
+            if (entry is sforce.SObjectEntry)
+            {
+                node = new SObjectNode(entry, parent);
+            }
+            else if (entry is sforce.FieldEntry)
+            {
+                node = new FieldNode(entry, parent);
+            }
+
+            return node;
+        }
     }
 
     class SObjectNode : SObjectNodeBase
@@ -67,17 +81,16 @@ namespace sforceAddin.UI
             : base(sobj/*, sfClient*/, parent) { }
 
 
-        public override void dbClick()
+        public override void LoadNode(bool force = false)
         {
-            if (this.Nodes != null && this.Nodes.Count > 0)
+            if (this.Nodes.Count != 0)
             {
-                return;
+                this.Nodes.Clear();
             }
 
-            var nodes = sobjEntry.getChildren();
-            foreach (var item in nodes)
+            foreach (var entry in SObjEntry.LoadChildren(force))
             {
-                this.Nodes.Add(new FieldNode(item, this));
+                this.Nodes.Add(new FieldNode(entry, this));
             }
         }
     }
@@ -89,7 +102,7 @@ namespace sforceAddin.UI
         {
         }
 
-        public override void dbClick()
+        public override void LoadNode(bool force = false)
         {
             // string tableName = parent.Text;
             string tableName = parent.Name;
@@ -189,7 +202,7 @@ namespace sforceAddin.UI
                 listObj.Name = tableName;
                 listObj.TableStyle = "TableStyleMedium23";
                 Microsoft.Office.Tools.Excel.ListObject hostedListObj = Globals.Factory.GetVstoObject(listObj);
-                hostedListObj.Change += ListObject_Change;
+                // hostedListObj.Change += ListObject_Change;
                 hostedListObj.OriginalDataRestored += HostedListObj_OriginalDataRestored;
 
                 //listObj = worksheet.Controls.AddListObject(Globals.ThisAddIn.Application.ActiveCell, parent.Name).InnerObject;
@@ -211,6 +224,19 @@ namespace sforceAddin.UI
                 {
                     hostedListObj.Disconnect();
                 }
+
+                string headerRangeName = string.Format("{0}.{1}", parent.Name, this.Name);
+                for (int i = 1; i <= listObj.ListColumns.Count; i++)
+                {
+                    Microsoft.Office.Interop.Excel.Range range = listObj.HeaderRowRange.Cells[1, i];
+                    if (string.Equals(headerRangeName, range.Name.Name, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        range.Select();
+
+                        return;
+                    }
+                }
+
                 int cnt = hostedListObj.ListColumns.Count;
                 Interop.ListColumn column = hostedListObj.ListColumns.Add(cnt + 1);
                 column.Range.NumberFormat = "@"; // format as string
