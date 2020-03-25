@@ -264,8 +264,10 @@ namespace sforceAddin.sforce
             return dt;
         }
 
-        public void doUpdate(System.Data.DataTable table)
+        public List<object> doUpdate(System.Data.DataTable table)
         {
+            List<object> resultList = new List<object>();
+
             System.Data.DataTable updatedTable = table.GetChanges(System.Data.DataRowState.Modified);
             System.Data.DataTable deletedTable = table.GetChanges(System.Data.DataRowState.Deleted);
             System.Data.DataTable addedTable = table.GetChanges(System.Data.DataRowState.Added);
@@ -398,22 +400,7 @@ namespace sforceAddin.sforce
                 }
             }
 
-            if (upsertList.Count > 0)
-            {
-                UpsertResult[] results =  sfSvc.upsert("Id", upsertList.ToArray());
-
-                foreach (UpsertResult ret in results)
-                {
-                    if (!ret.success)
-                    {
-                        Error[] errors = ret.errors;
-                    }
-
-                }
-            }
-
             List<string> idsToDelete = new List<string>();
-
             if (deletedTable != null)
             {
                 foreach (DataRow row in deletedTable.Rows)
@@ -427,9 +414,25 @@ namespace sforceAddin.sforce
                 }
             }
 
+            if (upsertList.Count > 0)
+            {
+                UpsertResult[] results =  sfSvc.upsert("Id", upsertList.ToArray());
+                resultList.AddRange(results);
+
+                foreach (UpsertResult ret in results)
+                {
+                    if (!ret.success)
+                    {
+                        Error[] errors = ret.errors;
+                    }
+
+                }
+            }
+
             if (idsToDelete.Count > 0)
             {
                 DeleteResult[] results = sfSvc.delete(idsToDelete.ToArray());
+                resultList.AddRange(results);
 
                 foreach (DeleteResult result in results)
                 {
@@ -439,6 +442,8 @@ namespace sforceAddin.sforce
                     }
                 }
             }
+
+            return resultList;
         }
 
         private static bool hasCellChanged(DataRow row, DataColumn col)

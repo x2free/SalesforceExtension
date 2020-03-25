@@ -194,6 +194,7 @@
     <Compile Include="sforce\SForceClient.cs" />
     <Compile Include="sforce\SFSession.cs" />
     <Compile Include="sforce\SObjectEntry.cs" />
+    <Compile Include="sforce\Util.cs" />
     <Compile Include="UI\ConfigForm.cs">
       <SubType>Form</SubType>
     </Compile>

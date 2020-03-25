@@ -48,7 +48,7 @@
             this.btn_loadData = this.Factory.CreateRibbonButton();
             this.btn_ShowHideTaskPane = this.Factory.CreateRibbonButton();
             this.btn_CommitChanges = this.Factory.CreateRibbonButton();
-            this.btn_CopySelection = this.Factory.CreateRibbonButton();
+            this.btn_CloneSelection = this.Factory.CreateRibbonButton();
             this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.sfRibbonTab.SuspendLayout();
             this.grp_config.SuspendLayout();
@@ -107,7 +107,7 @@
             this.grp_Data.Items.Add(this.btn_loadData);
             this.grp_Data.Items.Add(this.btn_ShowHideTaskPane);
             this.grp_Data.Items.Add(this.btn_CommitChanges);
-            this.grp_Data.Items.Add(this.btn_CopySelection);
+            this.grp_Data.Items.Add(this.btn_CloneSelection);
             this.grp_Data.Label = "Data";
             this.grp_Data.Name = "grp_Data";
             // 
@@ -139,12 +139,12 @@
             this.btn_CommitChanges.Name = "btn_CommitChanges";
             this.btn_CommitChanges.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CommitChanges_Click);
             // 
-            // btn_CopySelection
+            // btn_CloneSelection
             // 
-            this.btn_CopySelection.Enabled = false;
-            this.btn_CopySelection.Label = "Copy Selection";
-            this.btn_CopySelection.Name = "btn_CopySelection";
-            this.btn_CopySelection.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CopySelection_Click);
+            this.btn_CloneSelection.Enabled = false;
+            this.btn_CloneSelection.Label = "Clone Selection";
+            this.btn_CloneSelection.Name = "btn_CloneSelection";
+            this.btn_CloneSelection.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CopySelection_Click);
             // 
             // sforceRibbon
             // 
@@ -177,7 +177,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGallery gallery_AuthOrg;
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown_TargetOrg;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CopySelection;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CloneSelection;
         private System.Windows.Forms.BindingSource bindingSource1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_Config;
     }

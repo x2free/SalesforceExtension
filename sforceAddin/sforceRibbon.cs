@@ -11,6 +11,8 @@ using Microsoft.Office.Tools;
 using Interop = Microsoft.Office.Interop.Excel;
 using Tools = Microsoft.Office.Tools.Excel;
 
+using sforceAddin.sforce;
+
 namespace sforceAddin
 {
     public partial class sforceRibbon
@@ -357,9 +359,15 @@ namespace sforceAddin
                 System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
-                sfClient.doUpdate(dt);
+                List<object> resultList = sfClient.doUpdate(dt);
 
-                dt.AcceptChanges();
+                bool hasError = false;
+                ProcessResult(resultList, out hasError);
+
+                if (!hasError)
+                {
+                    dt.AcceptChanges();
+                }
 
                 Cursor.Current = curCursor;
             }
@@ -614,7 +622,7 @@ namespace sforceAddin
             this.btn_ShowHideTaskPane.Enabled = true;
             this.btn_loadData.Enabled = true;
             this.btn_CommitChanges.Enabled = true;
-            this.btn_CopySelection.Enabled = true;
+            this.btn_CloneSelection.Enabled = true;
 
             return true;
         }
@@ -709,9 +717,15 @@ namespace sforceAddin
                     dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
                 }
 
-                sfClient.doUpdate(dt);
+                List<object> resultList = sfClient.doUpdate(dt);
 
-                dt.AcceptChanges();
+                bool hasError = false;
+                ProcessResult(resultList, out hasError);
+
+                if (!hasError)
+                {
+                    dt.AcceptChanges();
+                }
 
                 Cursor.Current = curCursor;
             }
@@ -732,6 +746,154 @@ namespace sforceAddin
             }
 
             configForm.ShowDialog();
+        }
+
+        private void ProcessResult(List<object> resultList, out bool hasError)
+        {
+            hasError = false;
+
+            string resultTableName = "$$Result";
+            System.Data.DataTable resultTable = ds.Tables[resultTableName];
+            //// System.Data.DataTable errorTable = null;
+            if (resultTable == null)
+            {
+                resultTable = new System.Data.DataTable();
+
+                // resultTable.TableName = string.Format("{0}-{1}", tableName, DateTime.Today.ToString("yyMMddHHmmss"));
+                resultTable.TableName = resultTableName;
+                //// resultTable.Columns.Add("RecId", typeof(Guid));
+                resultTable.Columns.Add("Id", typeof(string)); // Id or name (for insert)
+                resultTable.Columns.Add("Operation", typeof(string)); // update/insert/delete
+                resultTable.Columns.Add("Status", typeof(bool)); // success or no
+                resultTable.Columns.Add("Errors", typeof(string)); // errors
+
+                ////errorTable = new System.Data.DataTable("$$Errors");
+                ////errorTable.Columns.Add("RecId", typeof(Guid));
+                ////errorTable.Columns.Add("Error", typeof(string));
+                ////errorTable.Columns.Add("Fields", typeof(string));
+                ////errorTable.Columns.Add("Message", typeof(string));
+
+                ds.Tables.Add(resultTable);
+                //// ds.Tables.Add(errorTable);
+
+                //// resultTable.ChildRelations.Add(new System.Data.DataRelation("R-E", resultTable.Columns["RecId"], errorTable.Columns["RecId"]));
+            }
+
+            ////if (errorTable == null)
+            ////{
+            ////    errorTable = resultTable.ChildRelations["R-E"].ChildTable;
+            ////}
+
+            foreach (var result in resultList)
+            {
+                System.Data.DataRow row = resultTable.NewRow();
+                if (result is SFDC.UpsertResult)
+                {
+                    SFDC.UpsertResult ret = result as SFDC.UpsertResult;
+                    ////Guid recId = Guid.NewGuid();
+                    ////row["RecId"] = recId;
+                    row["Id"] = ret.id;
+                    row["Operation"] = ret.created ? "Insert" : "Update";
+                    row["Status"] = ret.success;
+
+                    if (!ret.success)
+                    {
+                        hasError = true;
+                        row["Errors"] = ret.errors.Error2String();
+
+                        ////System.Data.DataRow errRow = errorTable.NewRow();
+                        ////foreach (var err in ret.errors)
+                        ////{
+                        ////    errRow["RecId"] = recId;
+                        ////    errRow["Error"] = err.statusCode;
+                        ////    errRow["Fields"] = string.Join(", ", err.fields);
+                        ////    errRow["Message"] = err.message;
+                        ////}
+                    }
+                }
+                else if (result is SFDC.DeleteResult)
+                {
+                    SFDC.DeleteResult ret = result as SFDC.DeleteResult;
+                    ////Guid recId = Guid.NewGuid();
+                    ////row["RecId"] = recId;
+                    row["Id"] = ret.id;
+                    row["Operation"] = "Delete";
+                    row["Status"] = ret.success;
+
+                    if (!ret.success)
+                    {
+                        hasError = true;
+                        row["Errors"] = ret.errors.Error2String();
+
+                        ////System.Data.DataRow errRow = errorTable.NewRow();
+                        ////foreach (var err in ret.errors)
+                        ////{
+                        ////    errRow["RecId"] = recId;
+                        ////    errRow["Error"] = err.statusCode;
+                        ////    errRow["Fields"] = string.Join(", ", err.fields);
+                        ////    errRow["Message"] = err.message;
+                        ////}
+                    }
+                }
+
+                resultTable.Rows.Add(row);
+            }
+
+            Tools.Workbook workbook = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook);
+            Tools.Worksheet worksheet = null;
+            Tools.ListObject listObject = null;
+
+            foreach (Interop.Worksheet sheet in workbook.Sheets)
+            {
+                if (string.Equals(resultTableName, sheet.Name, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    worksheet = Globals.Factory.GetVstoObject(sheet);
+                    break;
+                }
+            }
+
+            if (worksheet == null)
+            {
+                worksheet = Globals.Factory.GetVstoObject(workbook.Sheets.Add());
+                worksheet.Name = resultTableName;
+            }
+
+            foreach (Interop.ListObject listObj in worksheet.ListObjects)
+            {
+                if (string.Equals(resultTableName, listObj.Name, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    listObject = Globals.Factory.GetVstoObject(listObj);
+                    break;
+                }
+            }
+
+            if (listObject == null)
+            {
+                listObject = Globals.Factory.GetVstoObject(worksheet.ListObjects.AddEx());
+                listObject.Name = resultTableName;
+                //// listObject.SetDataBinding(ds, resultTableName, "Id", "Operation", "Status", "Error", "Fields", "Message");
+                //// listObject.SetDataBinding(ds, "", "Id", "Operation", "Status", "Error", "Fields", "Message");
+                //// listObject.SetDataBinding(ds, resultTableName);
+                listObject.SetDataBinding(ds, resultTableName, "Id", "Operation", "Status", "Errors");
+                listObject.AutoSetDataBoundColumnHeaders = true; // else will show column1, column2, etc
+
+                // listObject.ListColumns["Errors"].Range.AutoFit(); // first time will throw error
+                // listObject.ListColumns["Errors"].Range.ColumnWidth = "Auto"; // unable to set ColumnWidth of Range clas
+                // listObject.ListColumns["Errors"].Range.Columns.AutoFit();
+                // listObject.ListColumns["Errors"].Range.EntireColumn.AutoFit();
+                worksheet.Columns.AutoFit();
+
+                //// set auto width
+                //foreach (Interop.ListColumn col in listObject.ListColumns)
+                //{
+                //    col.Range.AutoFit();
+                //}
+            }
+
+            listObject.RefreshDataRows();
+            // listObject.ListColumns["Errors"].Range.AutoFit(); // always error
+
+            worksheet.Activate();
         }
     }
 }
