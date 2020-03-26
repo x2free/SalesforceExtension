@@ -34,7 +34,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl1 = this.Factory.CreateRibbonDropDownItem();
             Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl2 = this.Factory.CreateRibbonDropDownItem();
             this.sfRibbonTab = this.Factory.CreateRibbonTab();
@@ -49,12 +48,10 @@
             this.btn_ShowHideTaskPane = this.Factory.CreateRibbonButton();
             this.btn_CommitChanges = this.Factory.CreateRibbonButton();
             this.btn_CloneSelection = this.Factory.CreateRibbonButton();
-            this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.sfRibbonTab.SuspendLayout();
             this.grp_config.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
             this.grp_Data.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
             this.SuspendLayout();
             // 
             // sfRibbonTab
@@ -160,7 +157,6 @@
             this.buttonGroup1.PerformLayout();
             this.grp_Data.ResumeLayout(false);
             this.grp_Data.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -178,7 +174,6 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGallery gallery_AuthOrg;
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown_TargetOrg;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CloneSelection;
-        private System.Windows.Forms.BindingSource bindingSource1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_Config;
     }
 
