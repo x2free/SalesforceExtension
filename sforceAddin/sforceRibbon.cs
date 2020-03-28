@@ -445,7 +445,7 @@ namespace sforceAddin
 
                 Cursor.Current = oldCursor;
 
-                btn_ShowHideTaskPane.Enabled = true;
+                btn_ShowHideSObList.Enabled = true;
             }
             catch (Exception ex)
             {
@@ -619,7 +619,7 @@ namespace sforceAddin
             // enable buttons
             // this.dropDown_TargetOrg.Enabled = true;
             this.btn_LoadTables.Enabled = true;
-            this.btn_ShowHideTaskPane.Enabled = true;
+            this.btn_ShowHideSObList.Enabled = true;
             this.btn_loadData.Enabled = true;
             this.btn_CommitChanges.Enabled = true;
             this.btn_CloneSelection.Enabled = true;
