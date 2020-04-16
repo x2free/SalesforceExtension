@@ -26,6 +26,7 @@ namespace sforceAddin
         private void sforceRibbon_Load(object sender, RibbonUIEventArgs e)
         {
             treeView = new UI.SObjectTreeViewControl();
+            treeView.tv_sobjs.ImageList = UI.SObjectNodeBase.ImgList;
             treeView.tv_sobjs.NodeMouseDoubleClick += Tv_sobjs_NodeMouseDoubleClick;
             treeView.tv_sobjs.NodeMouseClick += Tv_sobjs_NodeMouseClick;
         }
@@ -636,10 +637,15 @@ namespace sforceAddin
             }
 
             // Deactive current session
-            sforce.ConnectionManager.Instance.ActiveConnection.Deactive();
+            // sforce.ConnectionManager.Instance.ActiveConnection.Deactive(); // session timeout
+            sforce.Connection conn = sforce.ConnectionManager.Instance.ActiveConnection;
+            if (conn != null)
+            {
+                conn.Deactive();
+            }
 
             string orgName = dropDown.SelectedItem.Label;
-            sforce.Connection conn = sforce.ConnectionManager.Instance.FindConnection(orgName);
+            conn = sforce.ConnectionManager.Instance.FindConnection(orgName);
             conn.Active((con) => {
                 if (sfClient == null)
                 {
@@ -764,7 +770,8 @@ namespace sforceAddin
                 //// resultTable.Columns.Add("RecId", typeof(Guid));
                 resultTable.Columns.Add("Id", typeof(string)); // Id or name (for insert)
                 resultTable.Columns.Add("Operation", typeof(string)); // update/insert/delete
-                resultTable.Columns.Add("Status", typeof(bool)); // success or no
+                //resultTable.Columns.Add("Status", typeof(bool)); // success or no
+                resultTable.Columns.Add("Status", typeof(OpResultStatus));
                 resultTable.Columns.Add("Errors", typeof(string)); // errors
 
                 ////errorTable = new System.Data.DataTable("$$Errors");
@@ -794,7 +801,7 @@ namespace sforceAddin
                     ////row["RecId"] = recId;
                     row["Id"] = ret.id;
                     row["Operation"] = ret.created ? "Insert" : "Update";
-                    row["Status"] = ret.success;
+                    row["Status"] = ret.success ? OpResultStatus.Success : OpResultStatus.Failed;
 
                     if (!ret.success)
                     {
@@ -818,7 +825,7 @@ namespace sforceAddin
                     ////row["RecId"] = recId;
                     row["Id"] = ret.id;
                     row["Operation"] = "Delete";
-                    row["Status"] = ret.success;
+                    row["Status"] = ret.success ? OpResultStatus.Success : OpResultStatus.Failed;
 
                     if (!ret.success)
                     {
@@ -896,4 +903,6 @@ namespace sforceAddin
             worksheet.Activate();
         }
     }
+
+    internal enum OpResultStatus {Failed, Success}
 }

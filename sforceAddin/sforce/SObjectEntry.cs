@@ -107,6 +107,8 @@ namespace sforceAddin.sforce
         /// </summary>
         private SObjectEntryBase parent;
 
+        public bool IsRequired;
+
         public FieldEntry(String name, String label, bool isCustom, SForceClient sfClient, SObjectEntryBase parent)
             : base(name, label, isCustom, sfClient)
         {

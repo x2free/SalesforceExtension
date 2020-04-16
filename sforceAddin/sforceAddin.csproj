@@ -34,7 +34,7 @@
     <PublishUrl>C:\Projects\sforceApp\V1.2\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.1.0.1</ApplicationVersion>
+    <ApplicationVersion>1.1.0.2</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -227,6 +227,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="sforceRibbon.resx">
       <DependentUpon>sforceRibbon.cs</DependentUpon>
@@ -430,6 +431,9 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\RedStar6P.png" />
+    <None Include="Resources\RedStar4P.png" />
+    <None Include="Resources\Transparent.png" />
     <Content Include="sforce\WSDL\partner.wsdl.jsp.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -448,6 +452,7 @@
       <CachedSettingsPropName>sforceAddin_SFDC_SforceService</CachedSettingsPropName>
     </WebReferenceUrl>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

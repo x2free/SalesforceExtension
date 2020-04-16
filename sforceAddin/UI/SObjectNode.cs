@@ -39,6 +39,24 @@ namespace sforceAddin.UI
         //    this.sfClient = sfClient;
         //}
 
+        private static ImageList imgList = null;
+        public static ImageList ImgList {
+            get
+            {
+                if (imgList == null)
+                {
+                    imgList = new ImageList();
+                    // imgList.Images.Add(System.Drawing.Icon.ExtractAssociatedIcon(@"Resources\Required Icon.ico"));
+                    // imgList.Images.Add("RedStar", System.Drawing.Image.FromFile("sforceAddin.Resources.RedStar.png"));
+                    imgList.Images.Add("NonImg", Properties.Resources.NonImg);
+                    imgList.Images.Add("RedStar4P", Properties.Resources.RedStar4P);
+                    imgList.Images.Add("RedStar6P", Properties.Resources.RedStar6P);
+                }
+
+                return imgList;
+            }
+        }
+
         public SObjectNodeBase(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/, TreeNode parent)
         {
             this.Name = sobj.Name;
@@ -100,6 +118,13 @@ namespace sforceAddin.UI
         public FieldNode(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/, TreeNode parent)
             : base(sobj/*, sfClient*/, parent)
         {
+            bool isRequired = (sobj as sforce.FieldEntry).IsRequired;
+
+            if (isRequired)
+            {
+                this.ImageKey = "RedStar4P";
+                this.SelectedImageKey = "RedStar6P";
+            }
         }
 
         public override void LoadNode(bool force = false)

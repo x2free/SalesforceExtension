@@ -38,7 +38,7 @@ namespace sforceAddin.Auth
             System.Threading.Thread thread = new System.Threading.Thread(authSvr.handleRequest);
             thread.Start();
 
-            string getTookenReqUrl = string.Format("{0}{1}?response_type=code&client_id={2}&redirect_uri={3}&state={4}"
+            string getTookenReqUrl = string.Format("{0}{1}?response_type=code&client_id={2}&redirect_uri={3}&state={4}&prompt=select_account"
                         , baseUrl, authorization_url
                         , client_id, redirect_url
                         , "one");

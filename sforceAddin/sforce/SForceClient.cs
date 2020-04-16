@@ -95,7 +95,9 @@ namespace sforceAddin.sforce
 
             foreach (var sobj in globalDesc.sobjects)
             {
-                if (sobj.queryable && sobj.createable && sobj.updateable && sobj.deletable)
+                // if (sobj.queryable && sobj.createable && sobj.updateable && sobj.deletable)
+                // if (sobj.queryable && sobj.createable && sobj.deletable)
+                if (sobj.queryable && sobj.updateable)
                 {
                     sobjects.Add(new SObjectEntry(sobj.name, sobj.label, sobj.keyPrefix, sobj.custom, sobj.customSetting, this, sobj.labelPlural));
                 }
@@ -117,9 +119,14 @@ namespace sforceAddin.sforce
                 return fields;
             }
 
+            // field types: https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/field_types.htm
+            // field.type
             foreach (var field in result.fields)
             {
-                fields.Add(new FieldEntry(field.name, field.label, field.custom, this, sobj));
+                FieldEntry entry = new FieldEntry(field.name, field.label, field.custom, this, sobj);
+                entry.IsRequired = !field.nillable;
+
+                fields.Add(entry);
             }
 
             // var relation = result.childRelationships;
