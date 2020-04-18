@@ -18,7 +18,7 @@ namespace sforceAddin
     public partial class sforceRibbon
     {
         CustomTaskPane taskPane;
-        sforce.SForceClient sfClient;
+        // sforce.SForceClient sfClient;
         // System.Data.DataTable dt;
         System.Data.DataSet ds = new System.Data.DataSet();
         private UI.SObjectTreeViewControl treeView;
@@ -89,7 +89,6 @@ namespace sforceAddin
         }
 
         System.Net.Sockets.TcpListener myListener;
-        int port = 5050;
 
         private Cursor cursorState = null;
         private void btn_login_Click(object sender, RibbonControlEventArgs e)
@@ -208,7 +207,7 @@ namespace sforceAddin
             else if (e.Node is TreeNode && e.Node.Parent == null && e.Node.Nodes.Count == 0)
             {
                 TreeNode root = e.Node as TreeNode;
-                List<sforce.SObjectEntryBase> sobjList =  sfClient.getSObjects();
+                List<sforce.SObjectEntryBase> sobjList =  SForceClient.Instance.getSObjects();
                 ExpandNode(root, sobjList, true);
             }
 
@@ -312,7 +311,7 @@ namespace sforceAddin
 
                 System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[tableName];
                 bool isTableExist = dt != null;
-                dt = sfClient.execQuery(queryStr, tableName, dt);
+                dt = SForceClient.Instance.execQuery(queryStr, tableName, dt);
 
                 if (dt == null)
                 {
@@ -360,7 +359,7 @@ namespace sforceAddin
                 System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
-                List<object> resultList = sfClient.doUpdate(dt);
+                List<object> resultList = SForceClient.Instance.doUpdate(dt);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);
@@ -404,28 +403,17 @@ namespace sforceAddin
         {
             try
             {
-                sforce.Connection curConn = sforce.ConnectionManager.Instance.ActiveConnection;
-                if (curConn == null)
+                sforce.SFSession session = sforce.SFSessionManager.Instance.ActiveSession;
+                if (session == null)
                 {
-                    curConn = sforce.ConnectionManager.Instance.Connections.First();
-
-                    curConn.Active();
+                    session.IsActive = true;
                 }
-
-                if (sfClient == null)
-                {
-                    sfClient = new sforce.SForceClient();
-                    sfClient.init(curConn.Session);
-                }
+                SForceClient.Instance.SetSession(session);
 
                 Cursor oldCursor = Cursor.Current;
                 Cursor.Current = Cursors.WaitCursor;
 
-                //sfClient = new sforce.SForceClient();
-                //sforce.SFSession sfSession = sforce.SFSession.GetSession();
-                //bool isSucess = sfClient.login(sfSession);
-
-                List<sforce.SObjectEntryBase> sobjectList = sfClient.getSObjects();
+                List<sforce.SObjectEntryBase> sobjectList = SForceClient.Instance.getSObjects();
 
                 //if (treeView == null)
                 //{
@@ -552,11 +540,11 @@ namespace sforceAddin
 
                         if (node.Parent == null)
                         {
-                            objList = sfClient.getSObjects(true);
+                            objList = SForceClient.Instance.getSObjects(true);
                         }
                         else if (node is UI.SObjectNode)
                         {
-                            objList = sfClient.describeSObject((node as UI.SObjectNode).SObjEntry);
+                            objList = SForceClient.Instance.describeSObject((node as UI.SObjectNode).SObjEntry);
                         }
 
                         ExpandNode(node, objList, true);
@@ -586,17 +574,17 @@ namespace sforceAddin
             Auth.AuthUtil.doAuth(updateOrgList);
         }
 
-        private bool updateOrgList(sforce.Connection conn)
+        private bool updateOrgList(sforce.SFSession session)
         {
-            RibbonDropDownItem newItem = this.dropDown_TargetOrg.Items.FirstOrDefault(item => item.Label == conn.InstanceName);
+            RibbonDropDownItem newItem = this.dropDown_TargetOrg.Items.FirstOrDefault(item => item.Label == session.InstanceName);
             if (newItem != null)
             {
-                conn = sforce.ConnectionManager.Instance.FindConnection(conn.InstanceName);
+                session = sforce.SFSessionManager.Instance.FindSession(session.InstanceName);
             }
             else
             {
                 newItem = Factory.CreateRibbonDropDownItem();
-                newItem.Label = conn.InstanceName;
+                newItem.Label = session.InstanceName;
 
                 this.dropDown_TargetOrg.Items.Add(newItem);
             }
@@ -604,17 +592,10 @@ namespace sforceAddin
             // conn.Active();
             // this.dropDown_org.SelectedItem = newItem;
 
-            if (this.dropDown_TargetOrg.Items.Count == 1)
+            if (this.dropDown_TargetOrg.Items.Count == 1) // If only one org
             {
-                conn.Active((con) => {
-                    if (sfClient == null)
-                    {
-                        sfClient = new sforce.SForceClient();
-                    }
-
-                    sfClient.init(con.Session);
-                });
-
+                session.IsActive = true;
+                SForceClient.Instance.SetSession(session);
             }
 
             // enable buttons
@@ -638,42 +619,36 @@ namespace sforceAddin
 
             // Deactive current session
             // sforce.ConnectionManager.Instance.ActiveConnection.Deactive(); // session timeout
-            sforce.Connection conn = sforce.ConnectionManager.Instance.ActiveConnection;
-            if (conn != null)
+            sforce.SFSession session = sforce.SFSessionManager.Instance.ActiveSession;
+            if (session != null)
             {
-                conn.Deactive();
+                session.IsActive = false;
             }
 
-            string orgName = dropDown.SelectedItem.Label;
-            conn = sforce.ConnectionManager.Instance.FindConnection(orgName);
-            conn.Active((con) => {
-                if (sfClient == null)
-                {
-                    sfClient = new sforce.SForceClient();
-                }
+            string instanceName = dropDown.SelectedItem.Label;
+            session = sforce.SFSessionManager.Instance.FindSession(instanceName);
 
-                sfClient.init(con.Session);
-
-                // Refresh tree view
-                FufillTreeviewWithSObjectList(this.treeView, con.SObjects);
-            });
+            SForceClient.Instance.SetSession(session);
+            FufillTreeviewWithSObjectList(this.treeView, session.SObjects);
+            this.treeView.tv_sobjs.TopNode.Expand();
         }
 
         private bool apiVersion_Changed(string version)
         {
-            double versionNum = 0;
-            bool isSuccess = double.TryParse(version, out versionNum);
-            if (isSuccess)
-            {
-                Auth.AuthUtil.apiVersion = (int)versionNum;
+            // obsoleted since we are building the url dynamically?
+            //double versionNum = 0;
+            //bool isSuccess = double.TryParse(version, out versionNum);
+            //if (isSuccess)
+            //{
+            //    Auth.AuthUtil.apiVersion = (int)versionNum;
 
-                if (sfClient != null && sforce.ConnectionManager.Instance.ActiveConnection != null)
-                {
-                    sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
-                }
+            //    if (sfClient != null && sforce.ConnectionManager.Instance.ActiveConnection != null)
+            //    {
+            //        sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
+            //    }
 
-                return true;
-            }
+            //    return true;
+            //}
 
             return false;
         }
@@ -723,7 +698,7 @@ namespace sforceAddin
                     dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
                 }
 
-                List<object> resultList = sfClient.doUpdate(dt);
+                List<object> resultList = SForceClient.Instance.doUpdate(dt);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);

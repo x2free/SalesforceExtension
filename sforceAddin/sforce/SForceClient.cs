@@ -15,26 +15,43 @@ namespace sforceAddin.sforce
         private SforceService sfSvc;
         private String oldAuthUrl;
         private sforce.SFSession sfSession;
-        public String serverUrl;
+        private static SForceClient instance;
+        // public String serverUrl;
 
-        public List<SObjectEntry> sobjectList;
-
-        public bool init(sforce.SFSession session)
+        public void SetSession(sforce.SFSession session)
         {
             this.sfSession = session;
-
-            if (sfSvc == null)
-            {
-                sfSvc = new SFDC.SforceService();
-                sfSvc.SessionHeaderValue = new SessionHeader();
-            }
 
             sfSvc.SessionHeaderValue.sessionId = sfSession.SessionId;
             // sfSvc.Url = sfSession.InstanceUrl;
             sfSvc.Url = sfSession.SoapPartnerUrl;
-            this.serverUrl = sfSession.SoapPartnerUrl;
+            // this.serverUrl = sfSession.SoapPartnerUrl;
+        }
 
-            return true;
+        private SForceClient()
+        {
+            sfSvc = new SFDC.SforceService();
+            sfSvc.SessionHeaderValue = new SessionHeader();
+        }
+
+        public static SForceClient Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    lock (new object())
+                    {
+                        if (instance == null)
+                        {
+                            instance = new SForceClient();
+                        }
+                    }
+                }
+
+                return instance;
+            }
+            private set { }
         }
 
         public bool login(String userName, String password, String securityToken)
@@ -59,7 +76,7 @@ namespace sforceAddin.sforce
                 sfSvc.SessionHeaderValue.sessionId = lr.sessionId;
 
                 sfSvc.Url = lr.serverUrl;
-                this.serverUrl = sfSvc.Url;
+                // this.serverUrl = sfSvc.Url;
 
                 return true;
             }
@@ -80,8 +97,8 @@ namespace sforceAddin.sforce
         public List<SObjectEntryBase> getSObjects(bool force = false)
         {
             // cache objects
-            List<sforce.SObjectEntryBase> sobjects = ConnectionManager.Instance.ActiveConnection.SObjects == null
-                        ? new List<SObjectEntryBase>() : ConnectionManager.Instance.ActiveConnection.SObjects;
+            List<sforce.SObjectEntryBase> sobjects = this.sfSession.SObjects == null ? new List<SObjectEntryBase>() : this.sfSession.SObjects;
+
             if (!force && sobjects.Any())
             {
                 return sobjects;
@@ -101,7 +118,7 @@ namespace sforceAddin.sforce
             {
                 if (string.Equals(ex.Code.Name, "INVALID_SESSION_ID", StringComparison.InvariantCultureIgnoreCase)) {
                     Auth.AuthServer.RefreshAccessToken(this.sfSession);
-                    this.init(this.sfSession);
+                    this.SetSession(this.sfSession);
 
                     globalDesc = sfSvc.describeGlobal();
                 }
@@ -125,7 +142,7 @@ namespace sforceAddin.sforce
             }
 
             sobjects.Sort((a, b) => { return string.Compare(a.Label, b.Label); });
-            ConnectionManager.Instance.ActiveConnection.SObjects = sobjects;
+            this.sfSession.SObjects = sobjects;
 
             return sobjects;
         }
@@ -143,7 +160,7 @@ namespace sforceAddin.sforce
                 if (string.Equals(ex.Code.Name, "INVALID_SESSION_ID", StringComparison.InvariantCultureIgnoreCase))
                 {
                     Auth.AuthServer.RefreshAccessToken(this.sfSession);
-                    this.init(this.sfSession);
+                    this.SetSession(this.sfSession);
 
                     result = this.sfSvc.describeSObject(sobj.Name);
                 }

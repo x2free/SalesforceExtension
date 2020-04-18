@@ -15,17 +15,17 @@ namespace sforceAddin.Auth
     class AuthServer
     {
         private TcpListener server;
-        private Func<sforce.Connection, bool> callback;
+        private Func<sforce.SFSession, bool> callback;
         private bool isStarted = false;
 
         private static AuthServer _instance;
 
-        private AuthServer(Func<sforce.Connection, bool> callback)
+        private AuthServer(Func<sforce.SFSession, bool> callback)
         {
             this.callback = callback;
         }
 
-        public static AuthServer GetAuthServer(Func<sforce.Connection, bool> callback)
+        public static AuthServer GetAuthServer(Func<sforce.SFSession, bool> callback)
         {
             if (_instance == null)
             {
@@ -144,21 +144,23 @@ namespace sforceAddin.Auth
                         OAuth oAuthObj = (OAuth)xs.Deserialize(new StringReader(responseString));
 
                         // sforce.SFSession sfSession = sforce.SFSession.GetSession();
-                        sforce.SFSession sfSession = new sforce.SFSession();
-                        sfSession.SessionId = oAuthObj.access_token;
-                        sfSession.Signature = oAuthObj.signature;
-                        sfSession.Id = oAuthObj.id;
-                        // sfSession.IdToken = oAuthObj.id_token;
-                        sfSession.refreshToken = oAuthObj.refresh_token;
-                        sfSession.InstanceUrl = oAuthObj.instance_url;
-                        sfSession.IssuedAt = oAuthObj.issued_at;
-                        sfSession.Scope = oAuthObj.scope;
-                        sfSession.TokenType = oAuthObj.token_type;
-                        sfSession.ApiVersion = AuthUtil.apiVersion;
-                        sfSession.IsValid = true;
+                        //sforce.SFSession sfSession = new sforce.SFSession();
+                        //sfSession.SessionId = oAuthObj.access_token;
+                        //sfSession.Signature = oAuthObj.signature;
+                        //sfSession.Id = oAuthObj.id;
+                        //// sfSession.IdToken = oAuthObj.id_token;
+                        //sfSession.refreshToken = oAuthObj.refresh_token;
+                        //sfSession.InstanceUrl = oAuthObj.instance_url;
+                        //sfSession.IssuedAt = oAuthObj.issued_at;
+                        //sfSession.Scope = oAuthObj.scope;
+                        //sfSession.TokenType = oAuthObj.token_type;
+                        //sfSession.ApiVersion = AuthUtil.apiVersion;
+                        //sfSession.IsValid = true;
 
-                        sforce.Connection connection = new sforce.Connection(sfSession);
-                        sforce.ConnectionManager.Instance.AddConnection(connection);
+                        sforce.SFSession sfSession = new sforce.SFSession(oAuthObj);
+                        //sforce.Connection connection = new sforce.Connection(sfSession);
+                        //sforce.ConnectionManager.Instance.AddConnection(connection);
+                        sforce.SFSessionManager.Instance.AddSession(sfSession);
 
                         // response
                         string statusLine = "HTTP/1.1 200 OK\r\n";
@@ -180,7 +182,7 @@ namespace sforceAddin.Auth
 
                         if (this.callback != null)
                         {
-                            this.callback(connection);
+                            this.callback(sfSession);
                         }
 
                         netStream.Close();
@@ -208,7 +210,7 @@ namespace sforceAddin.Auth
         {
             //string postData = string.Format("grant_type=refresh_token&refresh_token={0}&&client_id={1}&client_secret={2}"
             //                      , expiredSession.refreshToken, Auth.AuthUtil.client_id, Auth.AuthUtil.client_secret);
-            string postData = string.Format("grant_type=refresh_token&refresh_token={0}", expiredSession.refreshToken);
+            string postData = string.Format("grant_type=refresh_token&refresh_token={0}", expiredSession.RefreshToken);
             var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(AuthUtil.baseUrl + AuthUtil.token_url);
 
             string basicCredential = string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", AuthUtil.client_id, AuthUtil.client_secret))));
@@ -245,21 +247,21 @@ namespace sforceAddin.Auth
 
                     // sforce.SFSession sfSession = sforce.SFSession.GetSession();
                     // sforce.SFSession sfSession = new sforce.SFSession();
-                    expiredSession.SessionId = oAuthObj.access_token;
-                    expiredSession.Signature = oAuthObj.signature;
-                    expiredSession.Id = oAuthObj.id;
-                    // expiredSession.IdToken = oAuthObj.id_token;
-                    if (!string.IsNullOrEmpty(oAuthObj.refresh_token))
-                    {
-                        expiredSession.refreshToken = oAuthObj.refresh_token;
-                    }
-                    expiredSession.InstanceUrl = oAuthObj.instance_url;
-                    expiredSession.IssuedAt = oAuthObj.issued_at;
-                    expiredSession.Scope = oAuthObj.scope;
-                    expiredSession.TokenType = oAuthObj.token_type;
-                    expiredSession.ApiVersion = AuthUtil.apiVersion;
-                    expiredSession.IsValid = true;
-
+                    //expiredSession.SessionId = oAuthObj.access_token;
+                    //expiredSession.Signature = oAuthObj.signature;
+                    //expiredSession.Id = oAuthObj.id;
+                    //// expiredSession.IdToken = oAuthObj.id_token;
+                    //if (!string.IsNullOrEmpty(oAuthObj.refresh_token))
+                    //{
+                    //    expiredSession.refreshToken = oAuthObj.refresh_token;
+                    //}
+                    //expiredSession.InstanceUrl = oAuthObj.instance_url;
+                    //expiredSession.IssuedAt = oAuthObj.issued_at;
+                    //expiredSession.Scope = oAuthObj.scope;
+                    //expiredSession.TokenType = oAuthObj.token_type;
+                    //expiredSession.ApiVersion = AuthUtil.apiVersion;
+                    //expiredSession.IsValid = true;
+                    expiredSession.RefreshSession(oAuthObj);
                     //sforce.Connection connection = new sforce.Connection(sfSession);
                     //sforce.ConnectionManager.Instance.AddConnection(connection);
                 }
@@ -280,18 +282,5 @@ namespace sforceAddin.Auth
         {
             server.Stop();
         }
-    }
-
-    public class OAuth
-    {
-        public string access_token;
-        public string signature;
-        public string scope;
-        // public string id_token;
-        public string instance_url;
-        public string id;
-        public string token_type;
-        public string issued_at;
-        public string refresh_token;
     }
 }

@@ -180,6 +180,7 @@
   <ItemGroup>
     <Compile Include="Auth\AuthServer.cs" />
     <Compile Include="Auth\AuthUtil.cs" />
+    <Compile Include="Auth\OAuth.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -189,10 +190,9 @@
     <Compile Include="sforceRibbon.Designer.cs">
       <DependentUpon>sforceRibbon.cs</DependentUpon>
     </Compile>
-    <Compile Include="sforce\Connection.cs" />
-    <Compile Include="sforce\ConnectionManager.cs" />
     <Compile Include="sforce\SForceClient.cs" />
     <Compile Include="sforce\SFSession.cs" />
+    <Compile Include="sforce\SFSessionManager.cs" />
     <Compile Include="sforce\SObjectEntry.cs" />
     <Compile Include="sforce\Util.cs" />
     <Compile Include="UI\ConfigForm.cs">

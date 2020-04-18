@@ -25,16 +25,16 @@ namespace sforceAddin
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-            if (sforce.ConnectionManager.Instance.Connections == null || sforce.ConnectionManager.Instance.Connections.Count() == 0)
+            if (sforce.SFSessionManager.Instance.Sessions == null || sforce.SFSessionManager.Instance.Sessions.Count() == 0)
             {
                 return;
             }
 
-            sforce.SForceClient client = new sforce.SForceClient();
-            foreach (sforce.Connection con in sforce.ConnectionManager.Instance.Connections)
+
+            foreach (sforce.SFSession session in sforce.SFSessionManager.Instance.Sessions)
             {
-                client.init(con.Session);
-                client.logout();
+                sforce.SForceClient.Instance.SetSession(session);
+                sforce.SForceClient.Instance.logout();
             }
         }
 

@@ -21,7 +21,7 @@ namespace sforceAddin.Auth
         public static string client_secret = "C23E3781FFF6AF8419362F0FA819C0F8358B57598A8065DB83DC2F216EC1E3BC";
         public static int apiVersion = 48;
 
-        public static void doAuth(Func<sforce.Connection, bool> callback)
+        public static void doAuth(Func<sforce.SFSession, bool> callback)
         {
             /*
                 https://login.salesforce.com/services/oauth2/authorize?response_type=code
