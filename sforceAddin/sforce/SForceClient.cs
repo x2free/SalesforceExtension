@@ -14,12 +14,15 @@ namespace sforceAddin.sforce
     {
         private SforceService sfSvc;
         private String oldAuthUrl;
+        private sforce.SFSession sfSession;
         public String serverUrl;
 
         public List<SObjectEntry> sobjectList;
 
-        public bool init(sforce.SFSession sfSession)
+        public bool init(sforce.SFSession session)
         {
+            this.sfSession = session;
+
             if (sfSvc == null)
             {
                 sfSvc = new SFDC.SforceService();
@@ -88,7 +91,25 @@ namespace sforceAddin.sforce
 
             // get SObjects
             // Make the describeGlobal() call 
-            DescribeGlobalResult globalDesc = sfSvc.describeGlobal();
+
+            DescribeGlobalResult globalDesc = null;
+            try
+            {
+                globalDesc = sfSvc.describeGlobal();
+            }
+            catch ( System.Web.Services.Protocols.SoapException ex)
+            {
+                if (string.Equals(ex.Code.Name, "INVALID_SESSION_ID", StringComparison.InvariantCultureIgnoreCase)) {
+                    Auth.AuthServer.RefreshAccessToken(this.sfSession);
+                    this.init(this.sfSession);
+
+                    globalDesc = sfSvc.describeGlobal();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             // Get the sObjects from the describe global result
             DescribeGlobalSObjectResult[] sObjResults = globalDesc.sobjects;
@@ -112,8 +133,26 @@ namespace sforceAddin.sforce
         public List<sforce.SObjectEntryBase> describeSObject(SObjectEntryBase sobj)
         {
             List<sforce.SObjectEntryBase> fields = new List<SObjectEntryBase>();
+            DescribeSObjectResult result = null;
+            try
+            {
+                result = this.sfSvc.describeSObject(sobj.Name);
+            }
+            catch (System.Web.Services.Protocols.SoapException ex)
+            {
+                if (string.Equals(ex.Code.Name, "INVALID_SESSION_ID", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Auth.AuthServer.RefreshAccessToken(this.sfSession);
+                    this.init(this.sfSession);
 
-            DescribeSObjectResult result =  this.sfSvc.describeSObject(sobj.Name);
+                    result = this.sfSvc.describeSObject(sobj.Name);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
             if (result == null)
             {
                 return fields;

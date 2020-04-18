@@ -148,7 +148,8 @@ namespace sforceAddin.Auth
                         sfSession.SessionId = oAuthObj.access_token;
                         sfSession.Signature = oAuthObj.signature;
                         sfSession.Id = oAuthObj.id;
-                        sfSession.IdToken = oAuthObj.id_token;
+                        // sfSession.IdToken = oAuthObj.id_token;
+                        sfSession.refreshToken = oAuthObj.refresh_token;
                         sfSession.InstanceUrl = oAuthObj.instance_url;
                         sfSession.IssuedAt = oAuthObj.issued_at;
                         sfSession.Scope = oAuthObj.scope;
@@ -203,6 +204,78 @@ namespace sforceAddin.Auth
             }
         }
 
+        public static void RefreshAccessToken(sforce.SFSession expiredSession)
+        {
+            //string postData = string.Format("grant_type=refresh_token&refresh_token={0}&&client_id={1}&client_secret={2}"
+            //                      , expiredSession.refreshToken, Auth.AuthUtil.client_id, Auth.AuthUtil.client_secret);
+            string postData = string.Format("grant_type=refresh_token&refresh_token={0}", expiredSession.refreshToken);
+            var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(AuthUtil.baseUrl + AuthUtil.token_url);
+
+            string basicCredential = string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", AuthUtil.client_id, AuthUtil.client_secret))));
+            request.Headers.Add("Authorization", basicCredential);
+
+            var data = Encoding.UTF8.GetBytes(postData);
+
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";// grant type not supported
+            request.ContentLength = data.Length;
+            request.Accept = "application/xml;charset=UTF-8";
+            // request.Accept = "application/x-www-form-urlencoded";
+
+            // request.Headers.Add("Authorization", string.Format("Basic client_id={0}&client_secret={1}", client_id, client_secret));
+            //string basicCredential = string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", AuthUtil.client_id, AuthUtil.client_secret))));
+            //request.Headers.Add("Authorization", basicCredential);
+
+            using (Stream stream = request.GetRequestStream())
+            {
+                stream.Write(data, 0, data.Length);
+            }
+
+            try
+            {
+                using (var response = (System.Net.HttpWebResponse)request.GetResponse())
+                {
+                    var responseString = new System.IO.StreamReader(response.GetResponseStream()).ReadToEnd();
+
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(responseString);
+
+                    XmlSerializer xs = new XmlSerializer(typeof(OAuth));
+                    OAuth oAuthObj = (OAuth)xs.Deserialize(new StringReader(responseString));
+
+                    // sforce.SFSession sfSession = sforce.SFSession.GetSession();
+                    // sforce.SFSession sfSession = new sforce.SFSession();
+                    expiredSession.SessionId = oAuthObj.access_token;
+                    expiredSession.Signature = oAuthObj.signature;
+                    expiredSession.Id = oAuthObj.id;
+                    // expiredSession.IdToken = oAuthObj.id_token;
+                    if (!string.IsNullOrEmpty(oAuthObj.refresh_token))
+                    {
+                        expiredSession.refreshToken = oAuthObj.refresh_token;
+                    }
+                    expiredSession.InstanceUrl = oAuthObj.instance_url;
+                    expiredSession.IssuedAt = oAuthObj.issued_at;
+                    expiredSession.Scope = oAuthObj.scope;
+                    expiredSession.TokenType = oAuthObj.token_type;
+                    expiredSession.ApiVersion = AuthUtil.apiVersion;
+                    expiredSession.IsValid = true;
+
+                    //sforce.Connection connection = new sforce.Connection(sfSession);
+                    //sforce.ConnectionManager.Instance.AddConnection(connection);
+                }
+            }
+            catch (System.Net.WebException ex)
+            {
+                if (ex.Response != null)
+                {
+                    string content = new System.IO.StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
+                    Console.WriteLine(content);
+                }
+
+                throw new Exception("Failed to refresh access token. Please login manually. Error: " + ex.Message);
+            }
+        }
+
         public void stopServer()
         {
             server.Stop();
@@ -214,10 +287,11 @@ namespace sforceAddin.Auth
         public string access_token;
         public string signature;
         public string scope;
-        public string id_token;
+        // public string id_token;
         public string instance_url;
         public string id;
         public string token_type;
         public string issued_at;
+        public string refresh_token;
     }
 }

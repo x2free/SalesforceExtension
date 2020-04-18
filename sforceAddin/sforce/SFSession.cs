@@ -33,7 +33,8 @@ namespace sforceAddin.sforce
         public string SessionId;
         public string Scope;
         public string Signature;
-        public string IdToken;
+        // public string IdToken;
+        public string refreshToken;
         public string InstanceUrl;
         public string Id
         {
