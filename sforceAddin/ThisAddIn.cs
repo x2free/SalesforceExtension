@@ -34,7 +34,7 @@ namespace sforceAddin
             foreach (sforce.SFSession session in sforce.SFSessionManager.Instance.Sessions)
             {
                 sforce.SForceClient.Instance.SetSession(session);
-                sforce.SForceClient.Instance.logout();
+                sforce.SForceClient.Instance.Logout();
             }
         }
 

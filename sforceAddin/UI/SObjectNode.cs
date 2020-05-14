@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using sforceAddin.sforce;
 using Interop = Microsoft.Office.Interop.Excel;
 using Tools = Microsoft.Office.Tools.Excel;
+using System.Data;
 
 namespace sforceAddin.UI
 {
@@ -131,6 +132,16 @@ namespace sforceAddin.UI
         {
             // string tableName = parent.Text;
             string tableName = parent.Name;
+            string sheetName = tableName;
+            if (sheetName.Length >= 32)
+            {
+                sheetName = sheetName.Substring(0, 27) + "$" + sheetName.Length.ToString();
+            }
+
+            if (!SForceClient.Instance.SheetNameToTableNameMap.ContainsKey(sheetName))
+            {
+                SForceClient.Instance.SheetNameToTableNameMap.Add(sheetName, tableName);
+            }
 
             Microsoft.Office.Interop.Excel.Worksheet iWorksheet = null;
             // Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
@@ -143,7 +154,7 @@ namespace sforceAddin.UI
 
             foreach (Microsoft.Office.Interop.Excel.Worksheet sheet in sheets)
             {
-                if (String.Equals(tableName, sheet.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (String.Equals(sheetName, sheet.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     iWorksheet = sheet;
                     break;
@@ -153,7 +164,7 @@ namespace sforceAddin.UI
             if (iWorksheet == null)
             {
                 iWorksheet = activeWorkbook.Sheets.Add();
-                iWorksheet.Name = tableName;
+                iWorksheet.Name = sheetName;
             }
 
             iWorksheet.Activate();
@@ -211,6 +222,8 @@ namespace sforceAddin.UI
                 }
             }
 
+            Microsoft.Office.Tools.Excel.ListObject hostedListObj = null;
+            DataTable dt = SForceClient.Instance.DataSet.Tables[tableName];
             if (listObj == null)
             {
                 //// Microsoft.Office.Interop.Excel.Range curRange = worksheet.Cells.CurrentRegion;
@@ -226,9 +239,12 @@ namespace sforceAddin.UI
                 // listObj.DisplayName = parent.Name;
                 listObj.Name = tableName;
                 listObj.TableStyle = "TableStyleMedium23";
-                Microsoft.Office.Tools.Excel.ListObject hostedListObj = Globals.Factory.GetVstoObject(listObj);
+                hostedListObj = Globals.Factory.GetVstoObject(listObj);
                 // hostedListObj.Change += ListObject_Change;
                 hostedListObj.OriginalDataRestored += HostedListObj_OriginalDataRestored;
+                hostedListObj.BeforeRightClick += HostedListObj_BeforeRightClick;
+                hostedListObj.DataMemberChanged += HostedListObj_DataMemberChanged;
+                hostedListObj.Change += HostedListObj_Change;
 
                 //listObj = worksheet.Controls.AddListObject(Globals.ThisAddIn.Application.ActiveCell, parent.Name).InnerObject;
                 //// field header
@@ -238,10 +254,18 @@ namespace sforceAddin.UI
                 //// headerRange.Value = this.Name;
                 //headerRange.Value2 = this.Text;
 
+                if (dt != null)
+                {
+                    SForceClient.Instance.DataSet.Tables.Remove(dt);
+                }
+
+                dt = new DataTable(tableName);
+
+                SForceClient.Instance.DataSet.Tables.Add(dt);
             }
             else
             {
-                Microsoft.Office.Tools.Excel.ListObject hostedListObj = Globals.Factory.GetVstoObject(listObj);
+                hostedListObj = Globals.Factory.GetVstoObject(listObj);
 
                 // To add a column, must disconnect from the binded datasource, or the column cannot be added,
                 // so that the consequent operation on this column will fail with exception.
@@ -293,11 +317,63 @@ namespace sforceAddin.UI
 
             // remove this node once add to sheet
             // parent.Nodes.Remove(this);
+
+            // Do not add duplicate column for a table
+            if (!dt.Columns.Contains(this.Name))
+            {
+                dt.Columns.Add(this.Name, typeof(string));
+            }
+
+            hostedListObj.SetDataBinding(dt);
+            //hostedListObj.DataBoundFormat = Interop.XlRangeAutoFormat.xlRangeAutoFormat3DEffects1;
+            //hostedListObj.DefaultDataSourceUpdateMode = DataSourceUpdateMode.OnPropertyChanged;
+        }
+
+        private void HostedListObj_Change(Interop.Range targetRange, Tools.ListRanges changedRanges)
+        {
+            // throw new NotImplementedException();
+        }
+
+        private void HostedListObj_DataMemberChanged(object sender, EventArgs e)
+        {
+            // throw new NotImplementedException();
+        }
+
+        private void HostedListObj_BeforeRightClick(Interop.Range Target, ref bool Cancel)
+        {
+            // throw new NotImplementedException();
         }
 
         private void HostedListObj_OriginalDataRestored(object sender, Tools.OriginalDataRestoredEventArgs e)
         {
             // throw new NotImplementedException();
+
+            Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
+            string tableName = null;
+            SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
+
+            Microsoft.Office.Interop.Excel.ListObject listObj = null;
+            foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
+            {
+                // if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (String.Equals(tableName, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    listObj = obj;
+                    break;
+                }
+            }
+
+            if (listObj == null)
+            {
+                return;
+            }
+
+            Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
+
+            if (hostListObject.DataSource != null)
+            {
+                hostListObject.Disconnect();
+            }
         }
 
         private void ListObject_Change(Interop.Range targetRange, Tools.ListRanges changedRanges)
@@ -307,30 +383,41 @@ namespace sforceAddin.UI
             var entireRowAddres = targetRange.EntireRow.Address;
             var cellAddress = targetRange.Address.Count();
 
-            bool isColDeleting = entireColAddres == cellAddress;
+            // bool isColDeleting = (entireColAddres == cellAddress) && (changedRanges == (Tools.ListRanges.DataBodyRange | Tools.ListRanges.HeaderRowRange));
+            bool isColumnsChanged = changedRanges == (Tools.ListRanges.DataBodyRange | Tools.ListRanges.HeaderRowRange);
 
-            if (changedRanges == (Tools.ListRanges.DataBodyRange | Tools.ListRanges.HeaderRowRange))
+            // if (isColDeleting)
+            if (isColumnsChanged)
             {
                 Tools.ListObject hostedListObj = Globals.Factory.GetVstoObject(targetRange.ListObject);
                 if (hostedListObj.DataSource != null)
                 {
-                    System.Data.DataTable dt = hostedListObj.DataSource as System.Data.DataTable;
-                    if (dt != null)
-                    {
-                        int count1 = hostedListObj.ListColumns.Count;
-                        int count2 = dt.Columns.Count;
-
-                        if (count1 < count2)
-                        {
-                            hostedListObj.Disconnect();
-                        }
-                    }
+                    hostedListObj.Disconnect();
                 }
-                //if (hostedListObj.DataSource != null)
-                //{
-                //    hostedListObj.Disconnect();
-                //}
             }
+
+            //if (changedRanges == (Tools.ListRanges.DataBodyRange | Tools.ListRanges.HeaderRowRange))
+            //{
+            //    Tools.ListObject hostedListObj = Globals.Factory.GetVstoObject(targetRange.ListObject);
+            //    if (hostedListObj.DataSource != null)
+            //    {
+            //        System.Data.DataTable dt = hostedListObj.DataSource as System.Data.DataTable;
+            //        if (dt != null)
+            //        {
+            //            int count1 = hostedListObj.ListColumns.Count;
+            //            int count2 = dt.Columns.Count;
+
+            //            if (count1 < count2)
+            //            {
+            //                hostedListObj.Disconnect();
+            //            }
+            //        }
+            //    }
+            //    //if (hostedListObj.DataSource != null)
+            //    //{
+            //    //    hostedListObj.Disconnect();
+            //    //}
+            //}
         }
     }
 }

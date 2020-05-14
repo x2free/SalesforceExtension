@@ -20,7 +20,7 @@ namespace sforceAddin
         CustomTaskPane taskPane;
         // sforce.SForceClient sfClient;
         // System.Data.DataTable dt;
-        System.Data.DataSet ds = new System.Data.DataSet();
+        // System.Data.DataSet ds = new System.Data.DataSet();
         private UI.SObjectTreeViewControl treeView;
 
         private void sforceRibbon_Load(object sender, RibbonUIEventArgs e)
@@ -207,7 +207,7 @@ namespace sforceAddin
             else if (e.Node is TreeNode && e.Node.Parent == null && e.Node.Nodes.Count == 0)
             {
                 TreeNode root = e.Node as TreeNode;
-                List<sforce.SObjectEntryBase> sobjList =  SForceClient.Instance.getSObjects();
+                List<sforce.SObjectEntryBase> sobjList =  SForceClient.Instance.GetSObjects();
                 ExpandNode(root, sobjList, true);
             }
 
@@ -222,6 +222,7 @@ namespace sforceAddin
                 //return;
                 taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
                 taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
+                // taskPane.VisibleChanged += TaskPane_VisibleChanged;
             }
 
             taskPane.Visible = !taskPane.Visible;
@@ -234,6 +235,43 @@ namespace sforceAddin
             //}
         }
 
+        private void TaskPane_VisibleChanged(object sender, EventArgs e)
+        {
+            var sheets = Globals.ThisAddIn.Application.ActiveWorkbook.Worksheets;
+            string tableName = null;
+            if (taskPane.Visible)
+            {
+                foreach (Interop.Worksheet sheet in sheets)
+                {
+                    if (sheet.ListObjects != null)
+                    {
+                        SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
+                        Tools.ListObject listObj = Globals.Factory.GetVstoObject(sheet.ListObjects[tableName]);
+                        if (listObj != null && listObj.DataSource != null)
+                        {
+                            listObj.Disconnect();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (Interop.Worksheet sheet in sheets)
+                {
+                    if (sheet.ListObjects != null)
+                    {
+                        SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
+                        // Tools.ListObject listObj = Globals.Factory.GetVstoObject(sheet.ListObjects[sheet.Name]);
+                        Tools.ListObject listObj = Globals.Factory.GetVstoObject(sheet.ListObjects[tableName]);
+                        if (listObj != null && listObj.DataSource == null)
+                        {
+                            listObj.SetDataBinding(sforce.SForceClient.Instance.DataSet.Tables[tableName]);
+                        }
+                    }
+                }
+            }
+        }
+
         private void btn_LoadData_Click(object sender, RibbonControlEventArgs e)
         {
             Cursor curCursor = Cursor.Current;
@@ -241,11 +279,14 @@ namespace sforceAddin
             try
             {
                 Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
+                string tableName = null;
+                SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
 
                 Microsoft.Office.Interop.Excel.ListObject listObj = null;
                 foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
                 {
-                    if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                    // if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                    if (String.Equals(tableName, obj.Name, StringComparison.InvariantCultureIgnoreCase))
                     {
                         listObj = obj;
                         break;
@@ -257,8 +298,16 @@ namespace sforceAddin
                     return;
                 }
 
+                Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
+
+                // Disconnect the datasource temporarily, otherwise, it may be flashing due to row by row refresh
+                if (hostListObject.DataSource != null)
+                {
+                    hostListObject.Disconnect();
+                }
+
                 // string tableName = listObj.DisplayName;
-                string tableName = listObj.Name;
+                // string tableName = hostListObject.Name;
                 StringBuilder sb = new StringBuilder();
 
                 //foreach (Microsoft.Office.Interop.Excel.ListColumn col in listObj.ListColumns)
@@ -267,14 +316,17 @@ namespace sforceAddin
                 //}
                 List<string> columnNameList = new List<string>();
 
-                foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+                foreach (Microsoft.Office.Interop.Excel.Range headerCell in hostListObject.HeaderRowRange.Cells)
                 {
+                    string fieldName = headerCell.Name.Name.Substring(hostListObject.Name.Length + 1);
                     // sb2.AppendFormat("{0},", headerCell.Name.Name);
                     var v1 = headerCell.Name;
                     var v2 = headerCell.Name.Name;
-                    sb.AppendFormat("{0},", headerCell.Name.Name.Substring(listObj.Name.Length + 1));
+                    // sb.AppendFormat("{0},", headerCell.Name.Name.Substring(hostListObject.Name.Length + 1));
+                    sb.AppendFormat("{0},", fieldName);
 
-                    columnNameList.Add(headerCell.Name.Name.Replace('.', '_'));
+                    // columnNameList.Add(headerCell.Name.Name.Replace('.', '_'));
+                    columnNameList.Add(fieldName);
                 }
 
                 // get text instead of API names
@@ -309,9 +361,26 @@ namespace sforceAddin
                 sb.Remove(sb.Length - 1, 1);
                 string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
 
-                System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[tableName];
+                System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[tableName];
+
+                List<string> columnToRemove = new List<string>();
+                foreach (System.Data.DataColumn col in dt.Columns)
+                {
+                    if (!columnNameList.Contains(col.ColumnName))
+                    {
+                        // dt.Columns.Remove(col); // // Collection was modified; enumeration operation may not execute.
+                        columnToRemove.Add(col.ColumnName);
+                    }
+                }
+
+
+                foreach (string colName in columnToRemove)
+                {
+                    dt.Columns.Remove(colName);
+                }
+
                 bool isTableExist = dt != null;
-                dt = SForceClient.Instance.execQuery(queryStr, tableName, dt);
+                dt = SForceClient.Instance.ExecQuery(queryStr, tableName, dt);
 
                 if (dt == null)
                 {
@@ -323,17 +392,16 @@ namespace sforceAddin
 
                 if (!isTableExist)
                 {
-                    ds.Tables.Add(dt);
+                    SForceClient.Instance.DataSet.Tables.Add(dt);
                 }
 
                 // Microsoft.Office.Tools.Excel.ApplicationFactory factory = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
                 // Microsoft.Office.Tools.Excel.Worksheet sheet2 = (Microsoft.Office.Tools.Excel.Worksheet)Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook).ActiveSheet;
                 // sheet2.lis
 
-                Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
                 // hostListObject.SetDataBinding(dt, "", sb.ToString().Split(','));
-                // hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
-                hostListObject.SetDataBinding(dt);
+                hostListObject.SetDataBinding(dt, "", columnNameList.ToArray());
+                //hostListObject.SetDataBinding(dt);
                 hostListObject.RefreshDataRows();
 
                 Cursor.Current = curCursor;
@@ -347,19 +415,33 @@ namespace sforceAddin
 
         private void btn_CommitChanges_Click(object sender, RibbonControlEventArgs e)
         {
+            Microsoft.Office.Tools.Excel.Worksheet sheet = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveSheet);
+            Microsoft.Office.Tools.Excel.ListObject listObj = null;
+            string tableName = null;
+            SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
+
+            foreach (Microsoft.Office.Interop.Excel.ListObject item in sheet.ListObjects)
+            {
+                if (String.Equals(tableName, item.Name, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    listObj = Globals.Factory.GetVstoObject(item);
+                    break;
+                }
+            }
+
+            // System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
+            System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[tableName];
 
             Cursor curCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
 
             try
             {
-                System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
-
                 System.Data.DataTable updatedTable = dt.GetChanges(System.Data.DataRowState.Modified);
                 System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
-                List<object> resultList = SForceClient.Instance.doUpdate(dt);
+                List<object> resultList = SForceClient.Instance.DoUpdate(dt);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);
@@ -367,6 +449,14 @@ namespace sforceAddin
                 if (!hasError)
                 {
                     dt.AcceptChanges();
+                }
+
+                if (listObj != null)
+                {
+                    if (listObj.DataSource == null)
+                    {
+                        listObj.SetDataBinding(dt);
+                    }
                 }
 
                 Cursor.Current = curCursor;
@@ -406,6 +496,8 @@ namespace sforceAddin
                 sforce.SFSession session = sforce.SFSessionManager.Instance.ActiveSession;
                 if (session == null)
                 {
+                    string instanceName = this.dropDown_TargetOrg.SelectedItem.Label;
+                    session = sforce.SFSessionManager.Instance.FindSession(instanceName);
                     session.IsActive = true;
                 }
                 SForceClient.Instance.SetSession(session);
@@ -413,7 +505,7 @@ namespace sforceAddin
                 Cursor oldCursor = Cursor.Current;
                 Cursor.Current = Cursors.WaitCursor;
 
-                List<sforce.SObjectEntryBase> sobjectList = SForceClient.Instance.getSObjects();
+                List<sforce.SObjectEntryBase> sobjectList = SForceClient.Instance.GetSObjects();
 
                 //if (treeView == null)
                 //{
@@ -427,6 +519,8 @@ namespace sforceAddin
                     taskPane = Globals.ThisAddIn.CustomTaskPanes.Add(treeView, "SObject List");
                     taskPane.Visible = true;
                     taskPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionLeft;
+
+                    // taskPane.VisibleChanged += TaskPane_VisibleChanged;
                 }
 
 
@@ -540,11 +634,11 @@ namespace sforceAddin
 
                         if (node.Parent == null)
                         {
-                            objList = SForceClient.Instance.getSObjects(true);
+                            objList = SForceClient.Instance.GetSObjects(true);
                         }
                         else if (node is UI.SObjectNode)
                         {
-                            objList = SForceClient.Instance.describeSObject((node as UI.SObjectNode).SObjEntry);
+                            objList = SForceClient.Instance.DescribeSObject((node as UI.SObjectNode).SObjEntry);
                         }
 
                         ExpandNode(node, objList, true);
@@ -609,6 +703,15 @@ namespace sforceAddin
             return true;
         }
 
+        private void EnableButtons(bool IsEnable)
+        {
+            this.btn_LoadTables.Enabled = true;
+            this.btn_ShowHideSObList.Enabled = true;
+            this.btn_loadData.Enabled = true;
+            this.btn_CommitChanges.Enabled = true;
+            this.btn_CloneSelection.Enabled = true;
+        }
+
         private void dropDown_TargetOrg_SelectionChanged(object sender, RibbonControlEventArgs e)
         {
             RibbonDropDown dropDown = sender as RibbonDropDown;
@@ -627,10 +730,15 @@ namespace sforceAddin
 
             string instanceName = dropDown.SelectedItem.Label;
             session = sforce.SFSessionManager.Instance.FindSession(instanceName);
+            session.IsActive = true;
 
             SForceClient.Instance.SetSession(session);
             FufillTreeviewWithSObjectList(this.treeView, session.SObjects);
-            this.treeView.tv_sobjs.TopNode.Expand();
+
+            if (this.treeView.tv_sobjs != null && this.treeView.tv_sobjs.TopNode != null)
+            {
+                this.treeView.tv_sobjs.TopNode.Expand();
+            }
         }
 
         private bool apiVersion_Changed(string version)
@@ -662,8 +770,11 @@ namespace sforceAddin
         {
             Cursor curCursor = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
+            string tableName = null;
+            SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(Globals.ThisAddIn.Application.ActiveSheet.Name, out tableName);
 
-            System.Data.DataTable dt = (System.Data.DataTable)ds.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
+            // System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[Globals.ThisAddIn.Application.ActiveSheet.Name];
+            System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[tableName];
 
             if (dt.GetChanges() != null)
             {
@@ -698,7 +809,7 @@ namespace sforceAddin
                     dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
                 }
 
-                List<object> resultList = SForceClient.Instance.doUpdate(dt);
+                List<object> resultList = SForceClient.Instance.DoUpdate(dt);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);
@@ -734,7 +845,7 @@ namespace sforceAddin
             hasError = false;
 
             string resultTableName = "$$Result";
-            System.Data.DataTable resultTable = ds.Tables[resultTableName];
+            System.Data.DataTable resultTable = SForceClient.Instance.DataSet.Tables[resultTableName];
             //// System.Data.DataTable errorTable = null;
             if (resultTable == null)
             {
@@ -755,8 +866,9 @@ namespace sforceAddin
                 ////errorTable.Columns.Add("Fields", typeof(string));
                 ////errorTable.Columns.Add("Message", typeof(string));
 
-                ds.Tables.Add(resultTable);
-                //// ds.Tables.Add(errorTable);
+                SForceClient.Instance.DataSet.Tables.Add(resultTable);
+                SForceClient.Instance.SheetNameToTableNameMap.Add(resultTableName, resultTableName);
+                //// SForceClient.Instance.DataSet.Tables.Add(errorTable);
 
                 //// resultTable.ChildRelations.Add(new System.Data.DataRelation("R-E", resultTable.Columns["RecId"], errorTable.Columns["RecId"]));
             }
@@ -825,9 +937,12 @@ namespace sforceAddin
             Tools.Worksheet worksheet = null;
             Tools.ListObject listObject = null;
 
+            string tableName = null;
             foreach (Interop.Worksheet sheet in workbook.Sheets)
             {
-                if (string.Equals(resultTableName, sheet.Name, StringComparison.CurrentCultureIgnoreCase))
+                SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
+
+                if (string.Equals(resultTableName, tableName, StringComparison.CurrentCultureIgnoreCase))
                 {
                     worksheet = Globals.Factory.GetVstoObject(sheet);
                     break;
@@ -853,10 +968,10 @@ namespace sforceAddin
             {
                 listObject = Globals.Factory.GetVstoObject(worksheet.ListObjects.AddEx());
                 listObject.Name = resultTableName;
-                //// listObject.SetDataBinding(ds, resultTableName, "Id", "Operation", "Status", "Error", "Fields", "Message");
-                //// listObject.SetDataBinding(ds, "", "Id", "Operation", "Status", "Error", "Fields", "Message");
-                //// listObject.SetDataBinding(ds, resultTableName);
-                listObject.SetDataBinding(ds, resultTableName, "Id", "Operation", "Status", "Errors");
+                //// listObject.SetDataBinding(SForceClient.Instance.DataSet, resultTableName, "Id", "Operation", "Status", "Error", "Fields", "Message");
+                //// listObject.SetDataBinding(SForceClient.Instance.DataSet, "", "Id", "Operation", "Status", "Error", "Fields", "Message");
+                //// listObject.SetDataBinding(SForceClient.Instance.DataSet, resultTableName);
+                listObject.SetDataBinding(SForceClient.Instance.DataSet, resultTableName, "Id", "Operation", "Status", "Errors");
                 listObject.AutoSetDataBoundColumnHeaders = true; // else will show column1, column2, etc
 
                 // listObject.ListColumns["Errors"].Range.AutoFit(); // first time will throw error

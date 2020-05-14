@@ -18,6 +18,9 @@ namespace sforceAddin.sforce
         private static SForceClient instance;
         // public String serverUrl;
 
+        public System.Data.DataSet DataSet { get; private set; }
+        public Dictionary<string, string> SheetNameToTableNameMap { get; private set; }
+
         public void SetSession(sforce.SFSession session)
         {
             this.sfSession = session;
@@ -32,6 +35,9 @@ namespace sforceAddin.sforce
         {
             sfSvc = new SFDC.SforceService();
             sfSvc.SessionHeaderValue = new SessionHeader();
+
+            DataSet = new System.Data.DataSet();
+            SheetNameToTableNameMap = new Dictionary<string, string>();
         }
 
         public static SForceClient Instance
@@ -54,7 +60,7 @@ namespace sforceAddin.sforce
             private set { }
         }
 
-        public bool login(String userName, String password, String securityToken)
+        public bool Login(String userName, String password, String securityToken)
         {
             // To enable SSL/TLS
             System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
@@ -89,12 +95,12 @@ namespace sforceAddin.sforce
             //return false;
         }
 
-        public void logout()
+        public void Logout()
         {
             sfSvc.logout();
         }
 
-        public List<SObjectEntryBase> getSObjects(bool force = false)
+        public List<SObjectEntryBase> GetSObjects(bool force = false)
         {
             // cache objects
             List<sforce.SObjectEntryBase> sobjects = this.sfSession.SObjects == null ? new List<SObjectEntryBase>() : this.sfSession.SObjects;
@@ -147,7 +153,7 @@ namespace sforceAddin.sforce
             return sobjects;
         }
 
-        public List<sforce.SObjectEntryBase> describeSObject(SObjectEntryBase sobj)
+        public List<sforce.SObjectEntryBase> DescribeSObject(SObjectEntryBase sobj)
         {
             List<sforce.SObjectEntryBase> fields = new List<SObjectEntryBase>();
             DescribeSObjectResult result = null;
@@ -191,108 +197,34 @@ namespace sforceAddin.sforce
             return fields;
         }
 
-        public System.Data.DataTable execQuery(string query, string tableName, System.Data.DataTable dt)
+        public System.Data.DataTable ExecQuery(string query, string tableName, System.Data.DataTable dt)
         {
-            QueryResult ret = this.sfSvc.query(query);
+            QueryResult ret = null;
+
+            try
+            {
+                ret = this.sfSvc.query(query);
+            }
+            catch (System.Web.Services.Protocols.SoapException ex)
+            {
+                if (string.Equals(ex.Code.Name, "INVALID_SESSION_ID", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Auth.AuthServer.RefreshAccessToken(this.sfSession);
+                    this.SetSession(this.sfSession);
+
+                    ret = this.sfSvc.query(query);
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             if (ret == null || ret.records == null)
             {
                 //throw new Exception("No data loaded!");
                 return null;
             }
-
-            // column
-            bool isChanged = false;
-            if (dt == null)
-            {
-                dt = new System.Data.DataTable(tableName);
-
-                dt.ColumnChanged += Dt_ColumnChanged;
-                // dt.ColumnChanging += Dt_ColumnChanging;
-                dt.RowChanged += Dt_RowChanged;
-                dt.RowDeleted += Dt_RowDeleted;
-
-                isChanged = true;
-            }
-
-            if (ret.records.Count<sObject>() > 0)
-            {
-                sObject rec = ret.records.First<sObject>();
-
-                if (dt.Columns.Count != rec.Any.Count())
-                {
-                    isChanged = true;
-                }
-            }
-
-            if (isChanged)
-            {
-                dt.Clear();
-                dt.Columns.Clear();
-            }
-
-            if (isChanged)
-            {
-                sObject rec = ret.records.First<sObject>();
-                // create column info based on 1st row
-                foreach (System.Xml.XmlElement col in rec.Any)
-                {
-                    // string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
-                    string fieldName = col.LocalName;
-                    if (col.FirstChild != null)
-                    {
-                        switch (col.FirstChild.NodeType)
-                        {
-                            case System.Xml.XmlNodeType.None:
-                                break;
-                            case System.Xml.XmlNodeType.Element:
-                                break;
-                            case System.Xml.XmlNodeType.Attribute:
-                                break;
-                            case System.Xml.XmlNodeType.Text:
-                                dt.Columns.Add(fieldName, typeof(string));
-                                break;
-                            case System.Xml.XmlNodeType.CDATA:
-                                break;
-                            case System.Xml.XmlNodeType.EntityReference:
-                                break;
-                            case System.Xml.XmlNodeType.Entity:
-                                break;
-                            case System.Xml.XmlNodeType.ProcessingInstruction:
-                                break;
-                            case System.Xml.XmlNodeType.Comment:
-                                break;
-                            case System.Xml.XmlNodeType.Document:
-                                break;
-                            case System.Xml.XmlNodeType.DocumentType:
-                                break;
-                            case System.Xml.XmlNodeType.DocumentFragment:
-                                break;
-                            case System.Xml.XmlNodeType.Notation:
-                                break;
-                            case System.Xml.XmlNodeType.Whitespace:
-                                break;
-                            case System.Xml.XmlNodeType.SignificantWhitespace:
-                                break;
-                            case System.Xml.XmlNodeType.EndElement:
-                                break;
-                            case System.Xml.XmlNodeType.EndEntity:
-                                break;
-                            case System.Xml.XmlNodeType.XmlDeclaration:
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        dt.Columns.Add(fieldName, typeof(string));
-                    }
-                }
-            }
-
-            // In case of that add/remove columns when reload
-            // dt.Columns.Clear();
 
             // clear rows then re-bind them.
             dt.Rows.Clear();
@@ -327,7 +259,7 @@ namespace sforceAddin.sforce
             return dt;
         }
 
-        public List<object> doUpdate(System.Data.DataTable table)
+        public List<object> DoUpdate(System.Data.DataTable table)
         {
             List<object> resultList = new List<object>();
 
@@ -509,7 +441,7 @@ namespace sforceAddin.sforce
             return resultList;
         }
 
-        private static bool hasCellChanged(DataRow row, DataColumn col)
+        private static bool HasCellChanged(DataRow row, DataColumn col)
         {
             if (!row.HasVersion(DataRowVersion.Original))
             {

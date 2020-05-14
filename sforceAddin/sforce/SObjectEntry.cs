@@ -65,7 +65,7 @@ namespace sforceAddin.sforce
         {
             if (force || this.Children == null)
             {
-                this.Children = this.sfClient.describeSObject(this);
+                this.Children = this.sfClient.DescribeSObject(this);
             }
 
             return this.Children;
