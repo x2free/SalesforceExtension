@@ -58,6 +58,8 @@ namespace sforceAddin.UI
             }
         }
 
+        public string Label { get; private set; }
+
         public SObjectNodeBase(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/, TreeNode parent)
         {
             this.Name = sobj.Name;
@@ -71,6 +73,7 @@ namespace sforceAddin.UI
             //}
 
             this.SObjEntry = sobj;
+            this.Label = sobj.Label;
         }
 
         /// <summary>
@@ -132,11 +135,8 @@ namespace sforceAddin.UI
         {
             // string tableName = parent.Text;
             string tableName = parent.Name;
-            string sheetName = tableName;
-            if (sheetName.Length >= 32)
-            {
-                sheetName = sheetName.Substring(0, 27) + "$" + sheetName.Length.ToString();
-            }
+            string sheetName = (parent as SObjectNodeBase).Label;
+            sheetName = Util.CreateShortSheetName(sheetName);
 
             if (!SForceClient.Instance.SheetNameToTableNameMap.ContainsKey(sheetName))
             {
@@ -260,6 +260,7 @@ namespace sforceAddin.UI
                 }
 
                 dt = new DataTable(tableName);
+                // dt.DisplayExpression = (parent as SObjectNodeBase).Label;
 
                 SForceClient.Instance.DataSet.Tables.Add(dt);
             }

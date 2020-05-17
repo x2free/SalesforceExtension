@@ -38,6 +38,27 @@ namespace sforceAddin.sforce
 
             DataSet = new System.Data.DataSet();
             SheetNameToTableNameMap = new Dictionary<string, string>();
+
+            DataSet.Tables.CollectionChanging += (o, e) =>
+            {
+                if (e.Action == System.ComponentModel.CollectionChangeAction.Add)
+                {
+                    DataTable dt = e.Element as DataTable;
+                    if (dt == null)
+                    {
+                        return;
+                    }
+
+                    string sheetName = dt.TableName;
+                    if (sheetName.Length > 32)
+                    {
+                        sheetName = sheetName.Substring(0, 27) + "$" + sheetName.Length.ToString();
+                    }
+
+                    // dt.DisplayExpression = sheetName;
+                    // SheetNameToTableNameMap.Add(sheetName, dt.TableName);
+                }
+            };
         }
 
         public static SForceClient Instance

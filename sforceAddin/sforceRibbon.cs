@@ -283,13 +283,31 @@ namespace sforceAddin
                 SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
 
                 Microsoft.Office.Interop.Excel.ListObject listObj = null;
-                foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
+                if (string.IsNullOrEmpty(tableName))
                 {
-                    // if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
-                    if (String.Equals(tableName, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                    listObj = sheet.ListObjects.Item[1];
+                    tableName = listObj.Name;
+
+                    System.Data.DataTable dt2 = new System.Data.DataTable(tableName);
+                    foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
                     {
-                        listObj = obj;
-                        break;
+                        string fieldName = headerCell.Name.Name.Substring(tableName.Length + 1);
+                        dt2.Columns.Add(fieldName);
+                    }
+
+                    SForceClient.Instance.SheetNameToTableNameMap.Add(sheet.Name, listObj.Name);
+                    SForceClient.Instance.DataSet.Tables.Add(dt2);
+                }
+                else
+                {
+                    foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
+                    {
+                        // if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                        if (String.Equals(tableName, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            listObj = obj;
+                            break;
+                        }
                     }
                 }
 

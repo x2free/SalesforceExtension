@@ -30,5 +30,15 @@ namespace sforceAddin.sforce
             return str.Split(new char[] { ' ', '.', '?' },
                              StringSplitOptions.RemoveEmptyEntries).Length;
         }
+
+        public static string CreateShortSheetName(string name)
+        {
+            if (string.IsNullOrEmpty(name) || name.Length < 32)
+            {
+                return name;
+            }
+
+            return name.Substring(0, 26) + ".." + name.Length.ToString();
+        }
     }
 }

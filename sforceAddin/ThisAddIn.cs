@@ -5,7 +5,7 @@ using System.Text;
 using System.Xml.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
-using Microsoft.Office.Tools.Excel;
+using Tool = Microsoft.Office.Tools.Excel;
 
 namespace sforceAddin
 {
@@ -21,6 +21,33 @@ namespace sforceAddin
             //            System.Windows.Forms.MessageBox.Show(ex.Exception.Message, "sforce Addin Unhandled Exception"
             //                    , System.Windows.Forms.MessageBoxButtons.OK);
             //    };
+
+            // load all listobject/table into memory
+            // assume that one sheet has only one list object
+            //if (this.Application == null || this.Application.Worksheets == null) // cannot visit this.Application while starting, why?
+            //{
+            //    return;
+            //}
+
+            //foreach (Excel.Worksheet sheet in this.Application.Worksheets)
+            //{
+            //    if (sheet.ListObjects == null || sheet.ListObjects.Count == 0)
+            //    {
+            //        continue;
+            //    }
+
+            //    Excel.ListObject listObj = sheet.ListObjects.Item[1];
+
+            //    System.Data.DataTable dt2 = new System.Data.DataTable(listObj.Name);
+            //    foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
+            //    {
+            //        string fieldName = headerCell.Name.Name.Substring(listObj.Name.Length + 1);
+            //        dt2.Columns.Add(fieldName);
+            //    }
+
+            //    sforce.SForceClient.Instance.SheetNameToTableNameMap.Add(sheet.Name, listObj.Name);
+            //    sforce.SForceClient.Instance.DataSet.Tables.Add(dt2);
+            //}
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
