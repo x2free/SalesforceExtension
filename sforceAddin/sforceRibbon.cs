@@ -220,7 +220,7 @@ namespace sforceAddin
 
 
                 sb.Remove(sb.Length - 1, 1);
-                string queryStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
+                string queryStr = String.Format("SELECT {0} FROM {1} ORDER BY CreatedDate", sb.ToString(), tableName);
 
                 System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[tableName];
 
