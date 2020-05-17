@@ -165,6 +165,18 @@ namespace sforceAddin.UI
             {
                 iWorksheet = activeWorkbook.Sheets.Add();
                 iWorksheet.Name = sheetName;
+                iWorksheet.BeforeDelete += () =>
+                    {
+                        SForceClient.Instance.SheetNameToTableNameMap.Remove(sheetName);
+                        DataTable dt2Delete = SForceClient.Instance.DataSet.Tables[tableName];
+                        SForceClient.Instance.DataSet.Tables.Remove(tableName);
+                        dt2Delete.Dispose();
+
+                        foreach (Interop.ListObject lo in iWorksheet.ListObjects)
+                        {
+                            Globals.Factory.GetVstoObject(lo).Delete();
+                        }
+                    };
             }
 
             iWorksheet.Activate();

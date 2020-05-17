@@ -778,8 +778,10 @@ namespace sforceAddin
                 resultTable.Rows.Add(row);
             }
 
-            Tools.Workbook workbook = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook);
-            Tools.Worksheet worksheet = null;
+            // Tools.Workbook workbook = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook);
+            Interop.Workbook workbook = Globals.ThisAddIn.Application.ActiveWorkbook;
+            // Tools.Worksheet worksheet = null;
+            Interop.Worksheet worksheet = null;
             Tools.ListObject listObject = null;
 
             string tableName = null;
@@ -789,15 +791,36 @@ namespace sforceAddin
 
                 if (string.Equals(resultTableName, tableName, StringComparison.CurrentCultureIgnoreCase))
                 {
-                    worksheet = Globals.Factory.GetVstoObject(sheet);
+                    // worksheet = Globals.Factory.GetVstoObject(sheet);
+                    worksheet = sheet;
                     break;
                 }
             }
 
             if (worksheet == null)
             {
-                worksheet = Globals.Factory.GetVstoObject(workbook.Sheets.Add());
+                worksheet = workbook.Sheets.Add();
+                // worksheet = Globals.Factory.GetVstoObject(ws);
                 worksheet.Name = resultTableName;
+                worksheet.BeforeDelete += () =>
+                {
+                    SForceClient.Instance.SheetNameToTableNameMap.Remove(resultTableName);
+                    System.Data.DataTable dt2Delete = SForceClient.Instance.DataSet.Tables[resultTableName];
+                    SForceClient.Instance.DataSet.Tables.Remove(resultTableName);
+                    dt2Delete.Dispose();
+
+                    foreach (Interop.ListObject lo in worksheet.ListObjects)
+                    {
+                        Tools.ListObject hostedLO = Globals.Factory.GetVstoObject(lo);
+                        if (hostedLO.DataSource != null)
+                        {
+                            hostedLO.Disconnect();
+                        }
+
+                        // hostedLO.Delete();
+                        lo.Delete();
+                    }
+                };
             }
 
             foreach (Interop.ListObject listObj in worksheet.ListObjects)
