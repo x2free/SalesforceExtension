@@ -462,6 +462,206 @@ namespace sforceAddin.sforce
             return resultList;
         }
 
+        public List<object> DoUpdate2(System.Data.DataTable table)
+        {
+            List<object> resultList = new List<object>();
+
+            // Dictionary<int, int> updateIndexMap = new Dictionary<int, int>();
+            // Dictionary<int, int> insertIndexMap = new Dictionary<int, int>();
+            Dictionary<int, int> indexMap = new Dictionary<int, int>();
+            int updateIdx = 0, insertIdx = 0;
+            System.Data.DataTable updatedTable = table.GetChanges(System.Data.DataRowState.Modified);
+            System.Data.DataTable deletedTable = table.GetChanges(System.Data.DataRowState.Deleted);
+            System.Data.DataTable addedTable = table.GetChanges(System.Data.DataRowState.Added);
+
+            for (int idx = 0; idx < table.Rows.Count; idx++)
+            {
+                if (table.Rows[idx].RowState == DataRowState.Modified)
+                {
+                    indexMap.Add(updateIdx++, idx);
+                }
+                else if (table.Rows[idx].RowState == DataRowState.Added)
+                {
+                    indexMap.Add((updatedTable == null ? 0 : updatedTable.Rows.Count) + insertIdx++, idx);
+                }
+            }
+
+            //DataTable upsertTable = table.GetChanges(DataRowState.Modified | DataRowState.Added);
+
+            List<sObject> upsertList = new List<sObject>();
+
+            // refer to https://developer.salesforce.com/forums/?id=906F00000008sJ3IAI
+            // and https://developer.salesforce.com/forums/?id=906F00000008sErIAI
+            // to create objects
+
+            XmlDocument doc = new XmlDocument();
+
+            if (updatedTable != null)
+            {
+                foreach (System.Data.DataRow row in updatedTable.Rows)
+                {
+                    IEnumerable<DataColumn> changedCols = DataRowExtensions.GetChangedColumns(row);
+                    sObject obj = new sObject();
+                    obj.type = updatedTable.TableName;
+                    bool isChanged = false;
+
+                    List<XmlElement> fieldElements = new List<XmlElement>();
+                    List<String> fields2Null = null;
+
+                    foreach (System.Data.DataColumn column in updatedTable.Columns)
+                    {
+                        var oldValue = row[column, DataRowVersion.Original];
+                        var curValue = row[column, DataRowVersion.Current];
+                        object fieldValue = null;
+
+                        // DateTime? dt = row.Field<DateTime?>(column);
+
+                        XmlElement field = null;
+                        // if (row.IsNull(column))
+                        if (curValue == DBNull.Value)
+                        {
+                            if (oldValue == DBNull.Value || string.IsNullOrEmpty(oldValue as string)) // empty but not changed, ignore this field for this row
+                            {
+                                continue;
+                            }
+                            else // this field gets deleted
+                            {
+                                // field = doc.CreateElement(column.ColumnName);
+                                // field.InnerText = null;
+                                // fieldValue = string.Empty;
+                                // fieldValue = DBNull.Value;
+
+                                if (fields2Null == null)
+                                {
+                                    fields2Null = new List<string>();
+                                }
+                                fields2Null.Add(column.ColumnName);
+
+                                isChanged |= true;
+                            }
+                        }
+                        else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)curValue;
+
+                            fieldValue = curValue;
+                        }
+                        else if (curValue != oldValue)
+                        {
+                            // field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)row[column];
+                            // field.InnerText = (string)curValue;
+                            fieldValue = curValue;
+
+                            isChanged |= true;
+                        }
+
+                        // if (fieldValue != null || isChanged)
+                        if (fieldValue != null)
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = fieldValue as string;
+
+                            fieldElements.Add(field);
+                        }
+                    }
+
+                    if (isChanged)
+                    {
+                        obj.Any = fieldElements.ToArray();
+                        obj.fieldsToNull = fields2Null == null ? null : fields2Null.ToArray();
+                        upsertList.Add(obj);
+                    }
+                }
+            }
+
+            if (addedTable != null)
+            {
+                foreach (DataRow row in addedTable.Rows)
+                {
+                    sObject obj = new sObject();
+                    obj.type = addedTable.TableName;
+
+                    List<XmlElement> fieldElements = new List<XmlElement>();
+
+                    foreach (System.Data.DataColumn column in addedTable.Columns)
+                    {
+                        var curValue = row[column, DataRowVersion.Current];
+
+                        XmlElement field = null;
+                        // if (row.IsNull(column))
+                        if (curValue == DBNull.Value || string.IsNullOrEmpty(curValue as string) || "id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            continue;
+                        }
+                        //else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        //{
+                        //    field = doc.CreateElement(column.ColumnName);
+                        //    field.InnerText = null;
+                        //}
+                        else
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = (string)curValue;
+                        }
+
+                        fieldElements.Add(field);
+                    }
+
+                    obj.Any = fieldElements.ToArray();
+                    upsertList.Add(obj);
+                }
+            }
+
+            List<string> idsToDelete = new List<string>();
+            if (deletedTable != null)
+            {
+                foreach (DataRow row in deletedTable.Rows)
+                {
+                    string id = row["Id", DataRowVersion.Original] as string;
+
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        idsToDelete.Add(id);
+                    }
+                }
+            }
+
+            if (upsertList.Count > 0)
+            {
+                UpsertResult[] results = sfSvc.upsert("Id", upsertList.ToArray());
+                resultList.AddRange(results);
+
+                for (int idx = 0; idx < results.Length; idx++)
+                {
+                    if (results[idx].success)
+                    {
+                        // if (results[idx].created) // insert
+                        {
+                            table.Rows[indexMap[idx]].AcceptChanges();
+                        }
+                    }
+                }
+            }
+
+            if (idsToDelete.Count > 0)
+            {
+                DeleteResult[] results = sfSvc.delete(idsToDelete.ToArray());
+                resultList.AddRange(results);
+
+                foreach (DeleteResult result in results)
+                {
+                    if (!result.success)
+                    {
+                        Error[] errors = result.errors;
+                    }
+                }
+            }
+
+            return resultList;
+        }
+
         private static bool HasCellChanged(DataRow row, DataColumn col)
         {
             if (!row.HasVersion(DataRowVersion.Original))

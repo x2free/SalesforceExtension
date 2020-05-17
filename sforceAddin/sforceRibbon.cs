@@ -302,7 +302,7 @@ namespace sforceAddin
                 System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
-                List<object> resultList = SForceClient.Instance.DoUpdate(dt);
+                List<object> resultList = SForceClient.Instance.DoUpdate2(dt);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);
@@ -654,7 +654,7 @@ namespace sforceAddin
                     dt.Rows[item.Row - 2].SetAdded(); // 2 = header + vsto starts from 1
                 }
 
-                List<object> resultList = SForceClient.Instance.DoUpdate(dt);
+                List<object> resultList = SForceClient.Instance.DoUpdate2(dt);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);
