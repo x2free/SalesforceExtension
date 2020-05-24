@@ -312,12 +312,9 @@ namespace sforceAddin
                     dt.AcceptChanges();
                 }
 
-                if (listObj != null)
+                if (listObj != null && listObj.DataSource == null)
                 {
-                    if (listObj.DataSource == null)
-                    {
-                        listObj.SetDataBinding(dt);
-                    }
+                    listObj.SetDataBinding(dt);
                 }
 
                 Cursor.Current = curCursor;

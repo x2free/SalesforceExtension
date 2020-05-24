@@ -119,12 +119,19 @@ namespace sforceAddin.UI
 
     class FieldNode : SObjectNodeBase
     {
+        bool IsRequired;
+        bool IsReadly;
         public FieldNode(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/, TreeNode parent)
             : base(sobj/*, sfClient*/, parent)
         {
-            bool isRequired = (sobj as sforce.FieldEntry).IsRequired;
+            sforce.FieldEntry fieldEntry = (sobj as sforce.FieldEntry);
+            if (fieldEntry != null)
+            {
+                this.IsRequired = fieldEntry.IsRequired;
+                this.IsReadly = fieldEntry.IsReadonly;
+            } 
 
-            if (isRequired)
+            if (this.IsRequired)
             {
                 this.ImageKey = "RedStar4P";
                 this.SelectedImageKey = "RedStar6P";
@@ -334,7 +341,8 @@ namespace sforceAddin.UI
             // Do not add duplicate column for a table
             if (!dt.Columns.Contains(this.Name))
             {
-                dt.Columns.Add(this.Name, typeof(string));
+               DataColumn col = dt.Columns.Add(this.Name, typeof(string));
+                // col.ReadOnly = this.IsReadly; // DataTable cannot detect changes with this settig?
             }
 
             hostedListObj.SetDataBinding(dt);

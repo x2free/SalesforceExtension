@@ -207,9 +207,24 @@ namespace sforceAddin.sforce
             foreach (var field in result.fields)
             {
                 FieldEntry entry = new FieldEntry(field.name, field.label, field.custom, this, sobj);
+
                 entry.IsRequired = !field.nillable;
+                entry.IsReadonly = field.autoNumber // auto-number name field
+                    || field.calculated // formula field
+                    || field.type == fieldType.id // Id field
+                    || (!field.updateable && field.defaultedOnCreate); // created date, created by Id, etc
 
                 fields.Add(entry);
+
+                if (field.referenceTo != null) // lookup/master-detail field
+                {
+                    string fieldName = string.Format("{0}.Name", field.relationshipName); // assume Name is on the related object
+                    FieldEntry nameField = new FieldEntry(fieldName, field.label, field.custom, this, sobj);
+                    nameField.IsRequired = false;
+                    nameField.IsReadonly = true;
+
+                    fields.Add(nameField);
+                }
             }
 
             // var relation = result.childRelationships;
@@ -261,7 +276,23 @@ namespace sforceAddin.sforce
                         // dr[col.LocalName] = col.InnerText;
                         // string fieldName = string.Format("{0}_{1}", tableName, col.LocalName);
                         string fieldName = col.LocalName;
-                        dr[fieldName] = col.InnerText;
+                        string value = col.InnerText;
+
+                        // if (col.HasAttributes && !string.IsNullOrEmpty(col.GetAttribute("xsi:type"))) // relationship field
+                        if (col.HasAttributes) // relationship field
+                        {
+                            if (!string.IsNullOrEmpty(col.GetAttribute("xsi:type")))
+                            {
+                                fieldName = string.Format("{0}.{1}", col.LocalName, col.LastChild.LocalName);
+                                value = col.LastChild.InnerText;
+                            }
+                            else
+                            {
+                                continue; // relationship field but no value returned
+                            }
+                        }
+
+                        dr[fieldName] = value;
                     }
 
                     dt.Rows.Add(dr);
@@ -510,6 +541,11 @@ namespace sforceAddin.sforce
 
                     foreach (System.Data.DataColumn column in updatedTable.Columns)
                     {
+                        if (column.ReadOnly)
+                        {
+                            continue;
+                        }
+
                         var oldValue = row[column, DataRowVersion.Original];
                         var curValue = row[column, DataRowVersion.Current];
                         object fieldValue = null;
@@ -587,6 +623,11 @@ namespace sforceAddin.sforce
 
                     foreach (System.Data.DataColumn column in addedTable.Columns)
                     {
+                        if (column.ReadOnly)
+                        {
+                            continue;
+                        }
+
                         var curValue = row[column, DataRowVersion.Current];
 
                         XmlElement field = null;
