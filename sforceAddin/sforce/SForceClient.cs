@@ -162,7 +162,8 @@ namespace sforceAddin.sforce
             {
                 // if (sobj.queryable && sobj.createable && sobj.updateable && sobj.deletable)
                 // if (sobj.queryable && sobj.createable && sobj.deletable)
-                if (sobj.queryable && sobj.updateable)
+                // if (sobj.queryable && sobj.updateable)
+                if (sobj.queryable && (sobj.updateable || sobj.custom))
                 {
                     sobjects.Add(new SObjectEntry(sobj.name, sobj.label, sobj.keyPrefix, sobj.custom, sobj.customSetting, this, sobj.labelPlural));
                 }
@@ -215,7 +216,7 @@ namespace sforceAddin.sforce
                     || (!field.updateable && field.defaultedOnCreate); // created date, created by Id, etc
 
                 fields.Add(entry);
-
+                /*
                 if (field.referenceTo != null) // lookup/master-detail field
                 {
                     string fieldName = string.Format("{0}.Name", field.relationshipName); // assume Name is on the related object
@@ -224,7 +225,7 @@ namespace sforceAddin.sforce
                     nameField.IsReadonly = true;
 
                     fields.Add(nameField);
-                }
+                }*/
             }
 
             // var relation = result.childRelationships;
@@ -497,6 +498,34 @@ namespace sforceAddin.sforce
         {
             List<object> resultList = new List<object>();
 
+            int ROW_COUNT_LIMIT = 200;
+
+            int startIndex = 0, endIndex = 0;
+
+            while (true) {
+                if (endIndex < ROW_COUNT_LIMIT - 1 && startIndex + endIndex < table.Rows.Count)
+                {
+                    endIndex++;
+                    continue;
+                }
+
+                DoUpdate3(table, startIndex, endIndex, resultList);
+
+                if (startIndex + endIndex >= table.Rows.Count) {
+                    break;
+                }
+
+                startIndex += endIndex;
+                endIndex = 0;
+            }
+
+            return resultList;
+        }
+
+        public List<object> DoUpdate2_bak(System.Data.DataTable table)
+        {
+            List<object> resultList = new List<object>();
+
             // Dictionary<int, int> updateIndexMap = new Dictionary<int, int>();
             // Dictionary<int, int> insertIndexMap = new Dictionary<int, int>();
             Dictionary<int, int> indexMap = new Dictionary<int, int>();
@@ -681,6 +710,191 @@ namespace sforceAddin.sforce
                         // if (results[idx].created) // insert
                         {
                             table.Rows[indexMap[idx]].AcceptChanges();
+                        }
+                    }
+                }
+            }
+
+            if (idsToDelete.Count > 0)
+            {
+                DeleteResult[] results = sfSvc.delete(idsToDelete.ToArray());
+                resultList.AddRange(results);
+
+                foreach (DeleteResult result in results)
+                {
+                    if (!result.success)
+                    {
+                        Error[] errors = result.errors;
+                    }
+                }
+            }
+
+            return resultList;
+        }
+
+        public List<object> DoUpdate3(System.Data.DataTable table, int startIndex, int endIndex, List<object> resultList)
+        {
+            List<sObject> upsertList = new List<sObject>();
+
+            // refer to https://developer.salesforce.com/forums/?id=906F00000008sJ3IAI
+            // and https://developer.salesforce.com/forums/?id=906F00000008sErIAI
+            // to create objects
+
+            XmlDocument doc = new XmlDocument();
+            for (int idx = 0; idx < endIndex; idx++)
+            {
+                DataRow row = table.Rows[startIndex + idx];
+
+                if (row.RowState == DataRowState.Modified)
+                {
+                    IEnumerable<DataColumn> changedCols = DataRowExtensions.GetChangedColumns(row);
+                    sObject obj = new sObject();
+                    obj.type = table.TableName;
+                    bool isChanged = false;
+
+                    List<XmlElement> fieldElements = new List<XmlElement>();
+                    List<String> fields2Null = null;
+
+                    foreach (System.Data.DataColumn column in table.Columns)
+                    {
+                        if (column.ReadOnly)
+                        {
+                            continue;
+                        }
+
+                        var oldValue = row[column, DataRowVersion.Original];
+                        var curValue = row[column, DataRowVersion.Current];
+                        object fieldValue = null;
+
+                        // DateTime? dt = row.Field<DateTime?>(column);
+
+                        XmlElement field = null;
+                        // if (row.IsNull(column))
+                        if (curValue == DBNull.Value)
+                        {
+                            if (oldValue == DBNull.Value || string.IsNullOrEmpty(oldValue as string)) // empty but not changed, ignore this field for this row
+                            {
+                                continue;
+                            }
+                            else // this field gets deleted
+                            {
+                                // field = doc.CreateElement(column.ColumnName);
+                                // field.InnerText = null;
+                                // fieldValue = string.Empty;
+                                // fieldValue = DBNull.Value;
+
+                                if (fields2Null == null)
+                                {
+                                    fields2Null = new List<string>();
+                                }
+                                fields2Null.Add(column.ColumnName);
+
+                                isChanged |= true;
+                            }
+                        }
+                        else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)curValue;
+
+                            fieldValue = curValue;
+                        }
+                        else if (curValue != oldValue)
+                        {
+                            // field = doc.CreateElement(column.ColumnName);
+                            // field.InnerText = (string)row[column];
+                            // field.InnerText = (string)curValue;
+                            fieldValue = curValue;
+
+                            isChanged |= true;
+                        }
+
+                        // if (fieldValue != null || isChanged)
+                        if (fieldValue != null)
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = fieldValue as string;
+
+                            fieldElements.Add(field);
+                        }
+                    }
+
+                    if (isChanged)
+                    {
+                        obj.Any = fieldElements.ToArray();
+                        obj.fieldsToNull = fields2Null == null ? null : fields2Null.ToArray();
+                        upsertList.Add(obj);
+                    }
+                }
+                else if (row.RowState == DataRowState.Added)
+                {
+                    sObject obj = new sObject();
+                    obj.type = table.TableName;
+
+                    List<XmlElement> fieldElements = new List<XmlElement>();
+
+                    foreach (System.Data.DataColumn column in table.Columns)
+                    {
+                        if (column.ReadOnly)
+                        {
+                            continue;
+                        }
+
+                        var curValue = row[column, DataRowVersion.Current];
+
+                        XmlElement field = null;
+                        // if (row.IsNull(column))
+                        if (curValue == DBNull.Value || string.IsNullOrEmpty(curValue as string) || "id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            continue;
+                        }
+                        //else if ("id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        //{
+                        //    field = doc.CreateElement(column.ColumnName);
+                        //    field.InnerText = null;
+                        //}
+                        else
+                        {
+                            field = doc.CreateElement(column.ColumnName);
+                            field.InnerText = (string)curValue;
+                        }
+
+                        fieldElements.Add(field);
+                    }
+
+                    obj.Any = fieldElements.ToArray();
+                    upsertList.Add(obj);
+                }
+            }
+
+            System.Data.DataTable deletedTable = table.GetChanges(System.Data.DataRowState.Deleted);
+
+            List<string> idsToDelete = new List<string>();
+            if (deletedTable != null)
+            {
+                foreach (DataRow row in deletedTable.Rows)
+                {
+                    string id = row["Id", DataRowVersion.Original] as string;
+
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        idsToDelete.Add(id);
+                    }
+                }
+            }
+
+            if (upsertList.Count > 0)
+            {
+                UpsertResult[] results = sfSvc.upsert("Id", upsertList.ToArray());
+                resultList.AddRange(results);
+
+                for (int idx = 0; idx < results.Length; idx++)
+                {
+                    if (results[idx].success)
+                    {
+                        // if (results[idx].created) // insert
+                        {
+                            table.Rows[startIndex + idx].AcceptChanges();
                         }
                     }
                 }

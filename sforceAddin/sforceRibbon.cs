@@ -220,7 +220,7 @@ namespace sforceAddin
 
 
                 sb.Remove(sb.Length - 1, 1);
-                string queryStr = String.Format("SELECT {0} FROM {1} ORDER BY CreatedDate", sb.ToString(), tableName);
+                string queryStr = String.Format("SELECT {0} FROM {1} ORDER BY Id", sb.ToString(), tableName);
 
                 System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[tableName];
 
@@ -302,7 +302,8 @@ namespace sforceAddin
                 System.Data.DataTable deletedTable = dt.GetChanges(System.Data.DataRowState.Deleted);
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
-                List<object> resultList = SForceClient.Instance.DoUpdate2(dt);
+                System.Data.DataTable changedTable = dt.GetChanges(System.Data.DataRowState.Added | System.Data.DataRowState.Modified | System.Data.DataRowState.Deleted);
+                List<object> resultList = SForceClient.Instance.DoUpdate2(changedTable);
 
                 bool hasError = false;
                 ProcessResult(resultList, out hasError);
@@ -586,19 +587,19 @@ namespace sforceAddin
         private bool apiVersion_Changed(string version)
         {
             // obsoleted since we are building the url dynamically?
-            //double versionNum = 0;
-            //bool isSuccess = double.TryParse(version, out versionNum);
-            //if (isSuccess)
-            //{
-            //    Auth.AuthUtil.apiVersion = (int)versionNum;
+            double versionNum = 0;
+            bool isSuccess = double.TryParse(version, out versionNum);
+            if (isSuccess)
+            {
+                Auth.AuthUtil.apiVersion = (int)versionNum;
 
-            //    if (sfClient != null && sforce.ConnectionManager.Instance.ActiveConnection != null)
-            //    {
-            //        sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
-            //    }
+                //if (sfClient != null && sforce.ConnectionManager.Instance.ActiveConnection != null)
+                //{
+                //    sfClient.init(sforce.ConnectionManager.Instance.ActiveConnection.Session);
+                //}
 
-            //    return true;
-            //}
+                return true;
+            }
 
             return false;
         }
@@ -720,9 +721,17 @@ namespace sforceAddin
             ////    errorTable = resultTable.ChildRelations["R-E"].ChildTable;
             ////}
 
+            if (resultTable.Rows.Count > 0)
+            {
+                System.Data.DataRow rowTableName = resultTable.NewRow();
+                rowTableName["Id"] = DateTime.Now.ToLocalTime();
+                resultTable.Rows.Add(rowTableName);
+            }
+
             foreach (var result in resultList)
             {
                 System.Data.DataRow row = resultTable.NewRow();
+
                 if (result is SFDC.UpsertResult)
                 {
                     SFDC.UpsertResult ret = result as SFDC.UpsertResult;
