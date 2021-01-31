@@ -240,6 +240,27 @@ namespace sforceAddin
                     dt.Columns.Remove(colName);
                 }
 
+                //Microsoft.Office.Interop.Excel.Filters v11 = listObj.AutoFilter.Filters;
+                //Microsoft.Office.Interop.Excel.Filters v22 = hostListObject.AutoFilter.Filters;
+                //Microsoft.Office.Interop.Excel.Filters v33 = sheet.AutoFilter.Filters;
+
+                //if (v11 != null) {
+                //    var c1 = v11[0].Criteria1;
+                //    var c2 = v11[0].Criteria2;
+                //}
+
+                //if (v22 != null)
+                //{
+                //    var c1 = v22[0].Criteria1;
+                //    var c2 = v22[0].Criteria2;
+                //}
+
+                //if (v33 != null)
+                //{
+                //    var c1 = v33[0].Criteria1;
+                //    var c2 = v33[0].Criteria2;
+                //}
+
                 bool isTableExist = dt != null;
                 dt = SForceClient.Instance.ExecQuery(queryStr, tableName, dt);
 

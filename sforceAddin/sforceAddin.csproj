@@ -184,6 +184,11 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="sforceRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -221,14 +226,9 @@
     </Compile>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <EmbeddedResource Include="sforceRibbon.resx">
       <DependentUpon>sforceRibbon.cs</DependentUpon>
     </EmbeddedResource>
@@ -431,10 +431,16 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\RedStar6P.png" />
-    <None Include="Resources\RedStar4P.png" />
     <None Include="Resources\Transparent.png" />
-    <Content Include="sforce\WSDL\partner.wsdl.jsp.xml" />
+    <None Include="Resources\Formual.png" />
+    <None Include="Resources\Formula.png" />
+    <None Include="Resources\Id.png" />
+    <None Include="Resources\AutoNum.png" />
+    <None Include="Resources\Required.png" />
+    <None Include="Resources\SysRequired.png" />
+    <Content Include="sforce\WSDL\partner.wsdl.jsp.xml">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <WebReferences Include="Web References\" />

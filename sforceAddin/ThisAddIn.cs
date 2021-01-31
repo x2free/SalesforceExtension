@@ -6,6 +6,8 @@ using System.Xml.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
 using Tool = Microsoft.Office.Tools.Excel;
+using Microsoft.Office.Core;
+using System.Reflection;
 
 namespace sforceAddin
 {
@@ -75,8 +77,33 @@ namespace sforceAddin
         {
             this.Startup += new System.EventHandler(ThisAddIn_Startup);
             this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+            this.Application.SheetBeforeRightClick += OnSheetRightClick;
         }
-        
+
+        private void OnSheetRightClick(object Sh, Excel.Range Target, ref bool Cancel)
+        {
+            CommandBar cxtMenu = Globals.ThisAddIn.Application.CommandBars["Cell"];
+            CommandBarButton cmdItem = (CommandBarButton)cxtMenu.FindControl(MsoControlType.msoControlButton, 0, "sfMenuItem", Missing.Value, Missing.Value);
+            if (cmdItem == null)
+            {
+                // add the button
+                cmdItem = (CommandBarButton)cxtMenu.Controls.Add(MsoControlType.msoControlButton, Missing.Value, Missing.Value, cxtMenu.Controls.Count, true);
+                cmdItem.Caption = "sfMenuItems";
+                cmdItem.BeginGroup = true;
+                cmdItem.Tag = "sfMenuItem";
+                cmdItem.Click += OnClickCxtMenu;
+                //cmdItem.Visible = true;
+                //cxtMenu.Reset();
+            }
+
+            //cxtMenu.ShowPopup();
+        }
+
+        private void OnClickCxtMenu(CommandBarButton Ctrl, ref bool CancelDefault)
+        {
+            
+        }
+
         #endregion
     }
 }

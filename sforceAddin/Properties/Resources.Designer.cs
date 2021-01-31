@@ -63,6 +63,36 @@ namespace sforceAddin.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap AutoNum {
+            get {
+                object obj = ResourceManager.GetObject("AutoNum", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Formula {
+            get {
+                object obj = ResourceManager.GetObject("Formula", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Id {
+            get {
+                object obj = ResourceManager.GetObject("Id", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap NonImg {
             get {
                 object obj = ResourceManager.GetObject("NonImg", resourceCulture);
@@ -73,9 +103,9 @@ namespace sforceAddin.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap RedStar4P {
+        internal static System.Drawing.Bitmap Required {
             get {
-                object obj = ResourceManager.GetObject("RedStar4P", resourceCulture);
+                object obj = ResourceManager.GetObject("Required", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -83,9 +113,9 @@ namespace sforceAddin.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap RedStar6P {
+        internal static System.Drawing.Bitmap SysRequired {
             get {
-                object obj = ResourceManager.GetObject("RedStar6P", resourceCulture);
+                object obj = ResourceManager.GetObject("SysRequired", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

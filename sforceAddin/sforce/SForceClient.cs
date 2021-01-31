@@ -207,13 +207,16 @@ namespace sforceAddin.sforce
             // field.type
             foreach (var field in result.fields)
             {
-                FieldEntry entry = new FieldEntry(field.name, field.label, field.custom, this, sobj);
+                // FieldEntry entry = new FieldEntry(field.name, field.label, field.custom, this, sobj);
+                FieldEntry entry = new FieldEntry(field, this, sobj);
 
-                entry.IsRequired = !field.nillable;
                 entry.IsReadonly = field.autoNumber // auto-number name field
                     || field.calculated // formula field
                     || field.type == fieldType.id // Id field
-                    || (!field.updateable && field.defaultedOnCreate); // created date, created by Id, etc
+                    || (!field.updateable && field.defaultedOnCreate) // created date, created by Id, etc
+                    || !field.updateable; // LastViewedDate, LastReferencedDate
+
+                entry.IsRequired = !field.nillable && !entry.IsReadonly;
 
                 fields.Add(entry);
                 /*

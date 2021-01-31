@@ -48,6 +48,17 @@ namespace sforceAddin.sforce
             this.sfClient = sfClient;
         }
 
+        public SObjectEntryBase(SFDC.Field field, SForceClient sfClient)
+        {
+            this.Name = field.name;
+            this.Label = field.label;
+            // this.LabelPlural = pluralLabel;
+            // this.KeyPrefix = keyPrefix;
+            this.IsCustom = field.custom;
+            // this.isCustomSetting = isCustomSetting;
+            this.sfClient = sfClient;
+        }
+
         public int CompareTo(object obj)
         {
             SObjectEntryBase sobj = obj as SObjectEntryBase;
@@ -110,10 +121,43 @@ namespace sforceAddin.sforce
         public bool IsRequired;
         public bool IsReadonly;
 
+        public bool IsPickList;
+        public List<string> PickList;
+
+        public bool IsForeignKey;
+        public SFDC.ChildRelationship Relationship;
+
         public FieldEntry(String name, String label, bool isCustom, SForceClient sfClient, SObjectEntryBase parent)
             : base(name, label, isCustom, sfClient)
         {
             this.parent = parent;
+        }
+
+        public FieldEntry(SFDC.Field field, SForceClient sfClient, SObjectEntryBase parent)
+            : base(field, sfClient)
+        {
+            this.parent = parent;
+
+            if (field.picklistValues != null)
+            {
+                this.IsPickList = true;
+                this.PickList = new List<string>();
+                foreach (var item in field.picklistValues)
+                {
+                    PickList.Add(item.value);
+                }
+            }
+        }
+    }
+
+    class LookupFieldEntry : FieldEntry
+    {
+        public string LookupToObjectName;
+
+        public LookupFieldEntry(SFDC.Field field, SForceClient sfClient, SObjectEntryBase parent) 
+            : base (field, sfClient, parent)
+        {
+            //LookupToObjectName = field
         }
     }
 }

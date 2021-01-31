@@ -8,6 +8,8 @@ using sforceAddin.sforce;
 using Interop = Microsoft.Office.Interop.Excel;
 using Tools = Microsoft.Office.Tools.Excel;
 using System.Data;
+using Microsoft.Office.Core;
+using System.Reflection;
 
 namespace sforceAddin.UI
 {
@@ -50,8 +52,11 @@ namespace sforceAddin.UI
                     // imgList.Images.Add(System.Drawing.Icon.ExtractAssociatedIcon(@"Resources\Required Icon.ico"));
                     // imgList.Images.Add("RedStar", System.Drawing.Image.FromFile("sforceAddin.Resources.RedStar.png"));
                     imgList.Images.Add("NonImg", Properties.Resources.NonImg);
-                    imgList.Images.Add("RedStar4P", Properties.Resources.RedStar4P);
-                    imgList.Images.Add("RedStar6P", Properties.Resources.RedStar6P);
+                    imgList.Images.Add("Id", Properties.Resources.Id);
+                    ImgList.Images.Add("AutoNum", Properties.Resources.AutoNum);
+                    imgList.Images.Add("Formula", Properties.Resources.Formula);
+                    imgList.Images.Add("Required", Properties.Resources.Required);
+                    imgList.Images.Add("SysRequired", Properties.Resources.SysRequired);
                 }
 
                 return imgList;
@@ -121,6 +126,9 @@ namespace sforceAddin.UI
     {
         bool IsRequired;
         bool IsReadly;
+        bool IsPicklist;
+        string PickList;
+
         public FieldNode(sforce.SObjectEntryBase sobj/*, sforce.SForceClient sfClient*/, TreeNode parent)
             : base(sobj/*, sfClient*/, parent)
         {
@@ -129,12 +137,18 @@ namespace sforceAddin.UI
             {
                 this.IsRequired = fieldEntry.IsRequired;
                 this.IsReadly = fieldEntry.IsReadonly;
+
+                if (fieldEntry.IsPickList)
+                {
+                    this.IsPicklist = true;
+                    this.PickList = String.Join(", ", fieldEntry.PickList.ToArray<string>());
+                }
             } 
 
             if (this.IsRequired)
             {
-                this.ImageKey = "RedStar4P";
-                this.SelectedImageKey = "RedStar6P";
+                this.ImageKey = "Required";
+                this.SelectedImageKey = "Required";
             }
         }
 
@@ -341,8 +355,15 @@ namespace sforceAddin.UI
             // Do not add duplicate column for a table
             if (!dt.Columns.Contains(this.Name))
             {
-               DataColumn col = dt.Columns.Add(this.Name, typeof(string));
-                // col.ReadOnly = this.IsReadly; // DataTable cannot detect changes with this settig?
+                //if (this.IsPicklist)
+                //{
+                //    DataColumn col = dt.Columns.Add(this.Name, typeof(bool));
+                //}
+                //else
+                //{
+                    DataColumn col = dt.Columns.Add(this.Name, typeof(string));
+                    // col.ReadOnly = this.IsReadly; // DataTable cannot detect changes with this settig?
+                //}
             }
 
             hostedListObj.SetDataBinding(dt);
@@ -363,6 +384,27 @@ namespace sforceAddin.UI
         private void HostedListObj_BeforeRightClick(Interop.Range Target, ref bool Cancel)
         {
             // throw new NotImplementedException();
+            /*
+            Microsoft.Office.Core.CommandBar cmdBtn = Globals.ThisAddIn.Application.CommandBars["Cell"];
+            //Microsoft.Office.Core.CommandBarControl cmdItem = cmdBtn.Controls.Add(Microsoft.Office.Core.MsoControlType.msoControlButtonPopup, 1, "", 1, true);
+            Microsoft.Office.Core.CommandBarControl cmdItem = cmdBtn.Controls.Add(Microsoft.Office.Core.MsoControlType.msoControlButton, 0, "theMenu", System.Reflection.Missing.Value, System.Reflection.Missing.Value);
+            cmdItem.Caption = "Test";
+            */
+            //CommandBar cellbar = Globals.ThisAddIn.Application.CommandBars["Cell"];
+            //CommandBarButton button = (CommandBarButton)cellbar.FindControl(MsoControlType.msoControlButton, 0, "sfMenuItem", Missing.Value, Missing.Value);
+            //if (button == null)
+            //{
+            //    // add the button
+            //    button = (CommandBarButton)cellbar.Controls.Add(MsoControlType.msoControlButton, Missing.Value, Missing.Value, cellbar.Controls.Count, true);
+            //    button.Caption = "sfMenuItems";
+            //    button.BeginGroup = true;
+            //    button.Tag = "sfMenuItem";
+            //    //button.Click += new _CommandBarButtonEvents_ClickEventHandler(MyButton_Click);
+            //    button.Visible = true;
+            //    //cellbar.Reset();
+            //}
+
+            ////cellbar.ShowPopup();
         }
 
         private void HostedListObj_OriginalDataRestored(object sender, Tools.OriginalDataRestoredEventArgs e)
@@ -439,6 +481,13 @@ namespace sforceAddin.UI
             //    //    hostedListObj.Disconnect();
             //    //}
             //}
+        }
+    }
+
+    class PickListFieldNode : FieldNode
+    {
+        public PickListFieldNode(SObjectEntryBase sobj, TreeNode parent) : base(sobj, parent)
+        {
         }
     }
 }
