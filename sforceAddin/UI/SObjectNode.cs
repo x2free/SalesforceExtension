@@ -383,28 +383,28 @@ namespace sforceAddin.UI
 
         private void HostedListObj_BeforeRightClick(Interop.Range Target, ref bool Cancel)
         {
-            // throw new NotImplementedException();
+            Cancel = true; // won't show menu item
             /*
             Microsoft.Office.Core.CommandBar cmdBtn = Globals.ThisAddIn.Application.CommandBars["Cell"];
-            //Microsoft.Office.Core.CommandBarControl cmdItem = cmdBtn.Controls.Add(Microsoft.Office.Core.MsoControlType.msoControlButtonPopup, 1, "", 1, true);
+            Microsoft.Office.Core.CommandBarControl cmdItem = cmdBtn.Controls.Add(Microsoft.Office.Core.MsoControlType.msoControlButtonPopup, 1, "", 1, true);
             Microsoft.Office.Core.CommandBarControl cmdItem = cmdBtn.Controls.Add(Microsoft.Office.Core.MsoControlType.msoControlButton, 0, "theMenu", System.Reflection.Missing.Value, System.Reflection.Missing.Value);
             cmdItem.Caption = "Test";
             */
-            //CommandBar cellbar = Globals.ThisAddIn.Application.CommandBars["Cell"];
-            //CommandBarButton button = (CommandBarButton)cellbar.FindControl(MsoControlType.msoControlButton, 0, "sfMenuItem", Missing.Value, Missing.Value);
-            //if (button == null)
-            //{
-            //    // add the button
-            //    button = (CommandBarButton)cellbar.Controls.Add(MsoControlType.msoControlButton, Missing.Value, Missing.Value, cellbar.Controls.Count, true);
-            //    button.Caption = "sfMenuItems";
-            //    button.BeginGroup = true;
-            //    button.Tag = "sfMenuItem";
-            //    //button.Click += new _CommandBarButtonEvents_ClickEventHandler(MyButton_Click);
-            //    button.Visible = true;
-            //    //cellbar.Reset();
-            //}
+            CommandBar cellbar = Globals.ThisAddIn.Application.CommandBars["Cell"];
+            CommandBarButton button = (CommandBarButton)cellbar.FindControl(MsoControlType.msoControlButton, 0, "sfMenuItem", Missing.Value, Missing.Value);
+            if (button == null)
+            {
+                // add the button
+                button = (CommandBarButton)cellbar.Controls.Add(MsoControlType.msoControlButton, Missing.Value, Missing.Value, cellbar.Controls.Count, true);
+                button.Caption = "sfMenuItems";
+                button.BeginGroup = true;
+                button.Tag = "sfMenuItem";
+                //button.Click += new _CommandBarButtonEvents_ClickEventHandler(MyButton_Click);
+                button.Visible = true;
+                //cellbar.Reset();
+            }
 
-            ////cellbar.ShowPopup();
+            cellbar.ShowPopup();
         }
 
         private void HostedListObj_OriginalDataRestored(object sender, Tools.OriginalDataRestoredEventArgs e)

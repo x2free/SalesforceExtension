@@ -509,6 +509,15 @@ namespace sforceAddin
 
                         Cursor.Current = curCursor;
                     });
+            if (node is UI.FieldNode)
+            {
+                rightClickMenu.Items.Add("Add filter", null, (o, ev) =>
+                {
+                    
+                });
+                rightClickMenu.Items.Add("Sort by", null, (o, ev) => { });
+            }
+
             rightClickMenu.Show(sender as Control, new System.Drawing.Point(e.X, e.Y));
         }
 
