@@ -361,8 +361,11 @@ namespace sforceAddin.UI
                 //}
                 //else
                 //{
-                    DataColumn col = dt.Columns.Add(this.Name, typeof(string));
-                    // col.ReadOnly = this.IsReadly; // DataTable cannot detect changes with this settig?
+                // DataColumn col = dt.Columns.Add(this.Name, typeof(string));
+                // col.ReadOnly = this.IsReadly; // DataTable cannot detect changes with this settig?
+                DataColumnX col = new DataColumnX(this.Name, typeof(string));
+                col.IsReadonly = this.IsReadly;
+                dt.Columns.Add(col);
                 //}
             }
 

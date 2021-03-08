@@ -760,13 +760,20 @@ namespace sforceAddin.sforce
 
                     foreach (System.Data.DataColumn column in table.Columns)
                     {
-                        if (column.ReadOnly)
-                        {
-                            continue;
-                        }
+                        //if (column.ReadOnly)
+                        //{
+                        //    continue;
+                        //}
 
                         var oldValue = row[column, DataRowVersion.Original];
+
+                        // ignore Id field for update scenario
+                        if (!"id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase) && column is DataColumnX && (column as DataColumnX).IsReadonly) {
+                            //row[column] = oldValue; // reset to orginal value
+                            continue;
+                        }
                         var curValue = row[column, DataRowVersion.Current];
+
                         object fieldValue = null;
 
                         // DateTime? dt = row.Field<DateTime?>(column);

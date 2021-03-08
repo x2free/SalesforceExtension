@@ -324,6 +324,13 @@ namespace sforceAddin
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
                 System.Data.DataTable changedTable = dt.GetChanges(System.Data.DataRowState.Added | System.Data.DataRowState.Modified | System.Data.DataRowState.Deleted);
+                foreach (System.Data.DataColumn col in dt.Columns)
+                {
+                    if (col is DataColumnX) {
+                        (changedTable.Columns[col.ColumnName] as DataColumnX).IsReadonly = (col as DataColumnX).IsReadonly;
+                    }
+                }
+
                 List<object> resultList = SForceClient.Instance.DoUpdate2(changedTable);
 
                 bool hasError = false;

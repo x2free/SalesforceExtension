@@ -195,6 +195,10 @@
     <Compile Include="sforceRibbon.Designer.cs">
       <DependentUpon>sforceRibbon.cs</DependentUpon>
     </Compile>
+    <Compile Include="sforce\DataColumnX.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="sforce\FieldType.cs" />
     <Compile Include="sforce\SForceClient.cs" />
     <Compile Include="sforce\SFSession.cs" />
     <Compile Include="sforce\SFSessionManager.cs" />
