@@ -135,7 +135,8 @@ namespace sforceAddin
                     foreach (Microsoft.Office.Interop.Excel.Range headerCell in listObj.HeaderRowRange.Cells)
                     {
                         string fieldName = headerCell.Name.Name.Substring(tableName.Length + 1);
-                        dt2.Columns.Add(fieldName);
+                        //dt2.Columns.Add(fieldName);
+                        dt2.Columns.Add(new DataColumnX(fieldName));
                     }
 
                     SForceClient.Instance.SheetNameToTableNameMap.Add(sheet.Name, listObj.Name);
@@ -324,10 +325,10 @@ namespace sforceAddin
                 System.Data.DataTable addedTable = dt.GetChanges(System.Data.DataRowState.Added);
 
                 System.Data.DataTable changedTable = dt.GetChanges(System.Data.DataRowState.Added | System.Data.DataRowState.Modified | System.Data.DataRowState.Deleted);
-                foreach (System.Data.DataColumn col in dt.Columns)
+                foreach (DataColumnX col in dt.Columns)
                 {
                     if (col is DataColumnX) {
-                        (changedTable.Columns[col.ColumnName] as DataColumnX).IsReadonly = (col as DataColumnX).IsReadonly;
+                        (changedTable.Columns[col.ColumnName] as DataColumnX).IsReadonly = col.IsReadonly;
                     }
                 }
 

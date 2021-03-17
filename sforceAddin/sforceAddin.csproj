@@ -31,10 +31,10 @@
     <DefineConstants>VSTO40</DefineConstants>
     <IsWebBootstrapper>False</IsWebBootstrapper>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <PublishUrl>C:\Projects\sforceApp\V1.7\</PublishUrl>
+    <PublishUrl>C:\Projects\sforceApp\V1.9\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.1.0.9</ApplicationVersion>
+    <ApplicationVersion>1.1.0.12</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -198,7 +198,6 @@
     <Compile Include="sforce\DataColumnX.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="sforce\FieldType.cs" />
     <Compile Include="sforce\SForceClient.cs" />
     <Compile Include="sforce\SFSession.cs" />
     <Compile Include="sforce\SFSessionManager.cs" />
@@ -258,7 +257,7 @@
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
     </Compile>
-    <None Include="sforceAddin_PrivateKey.pfx" />
+    <None Include="sforceAddin_2021.pfx" />
     <None Include="ThisAddIn.Designer.xml">
       <DependentUpon>ThisAddIn.cs</DependentUpon>
     </None>
@@ -471,16 +470,16 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>sforceAddin_PrivateKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>sforceAddin_2021.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>4F49FFEE18EE509B38C7CE66804FD6747A0B8A16</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>A758416C92D39FF470C549D0EE976F077DC595AC</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>sforceAddin_PrivateKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>sforceAddin_2021.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

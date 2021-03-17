@@ -758,7 +758,7 @@ namespace sforceAddin.sforce
                     List<XmlElement> fieldElements = new List<XmlElement>();
                     List<String> fields2Null = null;
 
-                    foreach (System.Data.DataColumn column in table.Columns)
+                    foreach (DataColumnX column in table.Columns)
                     {
                         //if (column.ReadOnly)
                         //{
@@ -768,7 +768,7 @@ namespace sforceAddin.sforce
                         var oldValue = row[column, DataRowVersion.Original];
 
                         // ignore Id field for update scenario
-                        if (!"id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase) && column is DataColumnX && (column as DataColumnX).IsReadonly) {
+                        if (!"id".Equals(column.ColumnName, StringComparison.InvariantCultureIgnoreCase) && column.IsReadonly) {
                             //row[column] = oldValue; // reset to orginal value
                             continue;
                         }
@@ -843,9 +843,9 @@ namespace sforceAddin.sforce
 
                     List<XmlElement> fieldElements = new List<XmlElement>();
 
-                    foreach (System.Data.DataColumn column in table.Columns)
+                    foreach (DataColumnX column in table.Columns)
                     {
-                        if (column.ReadOnly)
+                        if (column.IsReadonly)
                         {
                             continue;
                         }
