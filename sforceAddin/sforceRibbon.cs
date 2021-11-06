@@ -942,6 +942,8 @@ namespace sforceAddin
                 filterForm = new UI.FilterForm();
                 filterForm.FormBorderStyle = FormBorderStyle.FixedDialog;
                 filterForm.StartPosition = FormStartPosition.CenterParent;
+                filterForm.MaximizeBox = false;
+                filterForm.MaximizeBox = false;
 
                 filterForm.FilterChangedHandler = (strFilter) => {
                     SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
