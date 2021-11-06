@@ -945,12 +945,21 @@ namespace sforceAddin
                 filterForm.MaximizeBox = false;
                 filterForm.MaximizeBox = false;
 
-                filterForm.FilterChangedHandler = (strFilter) => {
-                    SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
 
-                    return true;
-                } ;
+                //filterForm.FilterChangedHandler = (strFilter) =>
+                //{
+                //    // cannot get correct tableName here? since this is binded only for the 1st sheet.
+                //    SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
+
+                //    return true;
+                //};
             }
+
+            filterForm.FilterChangedHandler = (strFilter) =>
+            {
+                SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
+                return true;
+            };
 
             Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
             StringBuilder sb = new StringBuilder();
@@ -981,6 +990,13 @@ namespace sforceAddin
 
             filterForm.ShowDialog();
         }
+
+        //private bool filterChanged(string tableName, string strFilter)
+        //{
+        //    SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
+
+        //    return true;
+        //}
     }
 
     internal enum OpResultStatus {Failed, Success}
