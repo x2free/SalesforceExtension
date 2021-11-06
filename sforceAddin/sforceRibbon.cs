@@ -222,7 +222,7 @@ namespace sforceAddin
 
                 sb.Remove(sb.Length - 1, 1);
                 sb.AppendFormat(" FROM {0} ", tableName);
-                if (SForceClient.Instance.TableNameToFilterMap.ContainsKey(tableName))
+                if (SForceClient.Instance.TableNameToFilterMap.ContainsKey(tableName) && !String.IsNullOrEmpty(SForceClient.Instance.TableNameToFilterMap[tableName]))
                 {
                     sb.AppendFormat(" WHERE {0} ", SForceClient.Instance.TableNameToFilterMap[tableName]);
                 }
@@ -940,8 +940,11 @@ namespace sforceAddin
             if (filterForm == null)
             {
                 filterForm = new UI.FilterForm();
+                filterForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                filterForm.StartPosition = FormStartPosition.CenterParent;
+
                 filterForm.FilterChangedHandler = (strFilter) => {
-                    SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter;
+                    SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
 
                     return true;
                 } ;
