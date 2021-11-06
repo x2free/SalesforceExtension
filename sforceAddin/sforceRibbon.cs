@@ -916,6 +916,11 @@ namespace sforceAddin
             Microsoft.Office.Interop.Excel.ListObject listObj = null;
             if (string.IsNullOrEmpty(tableName))
             {
+                if (sheet.ListObjects.Count == 0)
+                {
+                    return;
+                }
+
                 listObj = sheet.ListObjects.Item[1];
                 tableName = listObj.Name;
             }
