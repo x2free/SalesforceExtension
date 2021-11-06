@@ -20,6 +20,7 @@ namespace sforceAddin.sforce
 
         public System.Data.DataSet DataSet { get; private set; }
         public Dictionary<string, string> SheetNameToTableNameMap { get; private set; }
+        public Dictionary<string, string> TableNameToFilterMap { get; private set; }
 
         public void SetSession(sforce.SFSession session)
         {
@@ -38,6 +39,7 @@ namespace sforceAddin.sforce
 
             DataSet = new System.Data.DataSet();
             SheetNameToTableNameMap = new Dictionary<string, string>();
+            TableNameToFilterMap = new Dictionary<string, string>();
 
             DataSet.Tables.CollectionChanging += (o, e) =>
             {

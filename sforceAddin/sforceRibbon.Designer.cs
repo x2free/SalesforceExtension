@@ -48,6 +48,7 @@
             this.btn_ShowHideSObList = this.Factory.CreateRibbonButton();
             this.btn_CommitChanges = this.Factory.CreateRibbonButton();
             this.btn_CloneSelection = this.Factory.CreateRibbonButton();
+            this.btn_filter = this.Factory.CreateRibbonButton();
             this.sfRibbonTab.SuspendLayout();
             this.grp_config.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -74,7 +75,7 @@
             this.dropDown_TargetOrg.Label = "Target Org";
             this.dropDown_TargetOrg.Name = "dropDown_TargetOrg";
             this.dropDown_TargetOrg.ScreenTip = "Select an authorized Org to work against.";
-            this.dropDown_TargetOrg.SizeString = "MMMMMMMMMMM";
+            this.dropDown_TargetOrg.SizeString = "MMMMMMMMMMMMMMMM";
             this.dropDown_TargetOrg.SelectionChanged += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.dropDown_TargetOrg_SelectionChanged);
             // 
             // buttonGroup1
@@ -108,6 +109,7 @@
             this.grp_Data.Items.Add(this.btn_ShowHideSObList);
             this.grp_Data.Items.Add(this.btn_CommitChanges);
             this.grp_Data.Items.Add(this.btn_CloneSelection);
+            this.grp_Data.Items.Add(this.btn_filter);
             this.grp_Data.Label = "Data";
             this.grp_Data.Name = "grp_Data";
             // 
@@ -150,6 +152,13 @@
             this.btn_CloneSelection.ScreenTip = "Clone selected records into target org, may not be the org which load data from.";
             this.btn_CloneSelection.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_CopySelection_Click);
             // 
+            // btn_filter
+            // 
+            this.btn_filter.Label = "Filter";
+            this.btn_filter.Name = "btn_filter";
+            this.btn_filter.Enabled = false;
+            this.btn_filter.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_filter_Click);
+            // 
             // sforceRibbon
             // 
             this.Name = "sforceRibbon";
@@ -182,6 +191,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown_TargetOrg;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_CloneSelection;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_Config;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btn_filter;
     }
 
     partial class ThisRibbonCollection

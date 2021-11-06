@@ -12,6 +12,8 @@ namespace sforceAddin.UI
 {
     public partial class FilterForm : Form
     {
+        public Func<string, bool> FilterChangedHandler;
+
         public FilterForm()
         {
             InitializeComponent();
@@ -20,6 +22,31 @@ namespace sforceAddin.UI
         public string GetFilter()
         {
             return this.textBox_filter.Text;
+        }
+
+        public void SetSelect(string strSelect)
+        {
+            this.textBox_select.Text = strSelect;
+        }
+
+        public void SetFilter(string strFilter)
+        {
+            this.textBox_filter.Text = strFilter;
+        }
+
+        private void btn_ok_Click(object sender, EventArgs e)
+        {
+            if (FilterChangedHandler != null)
+            {
+                FilterChangedHandler(this.textBox_filter.Text);
+            }
+
+            this.Close();
+        }
+
+        private void btn_cancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

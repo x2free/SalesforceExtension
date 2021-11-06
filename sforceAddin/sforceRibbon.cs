@@ -177,6 +177,7 @@ namespace sforceAddin
                 //}
                 List<string> columnNameList = new List<string>();
 
+                sb.Append("SELECT ");
                 foreach (Microsoft.Office.Interop.Excel.Range headerCell in hostListObject.HeaderRowRange.Cells)
                 {
                     string fieldName = headerCell.Name.Name.Substring(hostListObject.Name.Length + 1);
@@ -220,7 +221,14 @@ namespace sforceAddin
 
 
                 sb.Remove(sb.Length - 1, 1);
-                string queryStr = String.Format("SELECT {0} FROM {1} ORDER BY Id", sb.ToString(), tableName);
+                sb.AppendFormat(" FROM {0} ", tableName);
+                if (SForceClient.Instance.TableNameToFilterMap.ContainsKey(tableName))
+                {
+                    sb.AppendFormat(" WHERE {0} ", SForceClient.Instance.TableNameToFilterMap[tableName]);
+                }
+                sb.Append(" ORDER BY Id ");
+
+                string queryStr = sb.ToString();
 
                 System.Data.DataTable dt = (System.Data.DataTable)SForceClient.Instance.DataSet.Tables[tableName];
 
@@ -572,6 +580,7 @@ namespace sforceAddin
             this.btn_loadData.Enabled = true;
             this.btn_CommitChanges.Enabled = true;
             this.btn_CloneSelection.Enabled = true;
+            this.btn_filter.Enabled = true;
 
             return true;
         }
@@ -702,6 +711,7 @@ namespace sforceAddin
         }
 
         private UI.ConfigForm configForm;
+        private UI.FilterForm filterForm;
         private void btn_Config_Click(object sender, RibbonControlEventArgs e)
         {
             if (configForm == null)
@@ -895,6 +905,76 @@ namespace sforceAddin
             // listObject.ListColumns["Errors"].Range.AutoFit(); // always error
 
             worksheet.Activate();
+        }
+
+        private void btn_filter_Click(object sender, RibbonControlEventArgs e)
+        {
+            Microsoft.Office.Interop.Excel.Worksheet sheet = Globals.ThisAddIn.Application.ActiveSheet;
+            string tableName = null;
+            SForceClient.Instance.SheetNameToTableNameMap.TryGetValue(sheet.Name, out tableName);
+
+            Microsoft.Office.Interop.Excel.ListObject listObj = null;
+            if (string.IsNullOrEmpty(tableName))
+            {
+                listObj = sheet.ListObjects.Item[1];
+                tableName = listObj.Name;
+            }
+            else
+            {
+                foreach (Microsoft.Office.Interop.Excel.ListObject obj in sheet.ListObjects)
+                {
+                    // if (String.Equals(sheet.Name, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                    if (String.Equals(tableName, obj.Name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        listObj = obj;
+                        break;
+                    }
+                }
+            }
+
+            if (listObj == null)
+            {
+                return;
+            }
+
+            if (filterForm == null)
+            {
+                filterForm = new UI.FilterForm();
+                filterForm.FilterChangedHandler = (strFilter) => {
+                    SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter;
+
+                    return true;
+                } ;
+            }
+
+            Microsoft.Office.Tools.Excel.ListObject hostListObject = Globals.Factory.GetVstoObject(listObj);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (Microsoft.Office.Interop.Excel.Range headerCell in hostListObject.HeaderRowRange.Cells)
+            {
+                string fieldName = headerCell.Name.Name.Substring(hostListObject.Name.Length + 1);
+                // sb2.AppendFormat("{0},", headerCell.Name.Name);
+                var v1 = headerCell.Name;
+                var v2 = headerCell.Name.Name;
+                // sb.AppendFormat("{0},", headerCell.Name.Name.Substring(hostListObject.Name.Length + 1));
+                sb.AppendFormat("{0}, ", fieldName);
+            }
+
+            sb.Remove(sb.Length - 2, 2);
+            string selectStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
+
+            filterForm.SetSelect(selectStr);
+
+            if (SForceClient.Instance.TableNameToFilterMap.ContainsKey(tableName))
+            {
+                filterForm.SetFilter(SForceClient.Instance.TableNameToFilterMap[tableName]);
+            }
+            else
+            {
+                filterForm.SetFilter(string.Empty);
+            }
+
+            filterForm.ShowDialog();
         }
     }
 
