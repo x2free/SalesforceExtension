@@ -132,7 +132,7 @@
             // btn_ShowHideSObList
             // 
             this.btn_ShowHideSObList.Enabled = false;
-            this.btn_ShowHideSObList.Label = "Show/Hide Objects";
+            this.btn_ShowHideSObList.Label = "Objects";
             this.btn_ShowHideSObList.Name = "btn_ShowHideSObList";
             this.btn_ShowHideSObList.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_ShowHideTaskPane_Click);
             // 
