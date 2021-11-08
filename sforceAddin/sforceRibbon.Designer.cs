@@ -154,9 +154,9 @@
             // 
             // btn_filter
             // 
+            this.btn_filter.Enabled = false;
             this.btn_filter.Label = "Filter";
             this.btn_filter.Name = "btn_filter";
-            this.btn_filter.Enabled = false;
             this.btn_filter.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btn_filter_Click);
             // 
             // sforceRibbon

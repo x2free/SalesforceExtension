@@ -10,11 +10,11 @@ using System.Windows.Forms;
 
 namespace sforceAddin.UI
 {
-    public partial class FilterForm : Form
+    public partial class QueryForm : Form
     {
         public Func<string, bool> FilterChangedHandler;
 
-        public FilterForm()
+        public QueryForm()
         {
             InitializeComponent();
         }

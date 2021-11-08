@@ -1,6 +1,6 @@
 ﻿namespace sforceAddin.UI
 {
-    partial class FilterForm
+    partial class QueryForm
     {
         /// <summary>
         /// Required designer variable.
@@ -32,16 +32,15 @@
             this.btn_ok = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
             this.textBox_select = new System.Windows.Forms.TextBox();
-            this.label_where = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // textBox_filter
             // 
-            this.textBox_filter.Location = new System.Drawing.Point(12, 212);
+            this.textBox_filter.Location = new System.Drawing.Point(12, 194);
             this.textBox_filter.Multiline = true;
             this.textBox_filter.Name = "textBox_filter";
             this.textBox_filter.ScrollBars = System.Windows.Forms.ScrollBars.Horizontal;
-            this.textBox_filter.Size = new System.Drawing.Size(890, 168);
+            this.textBox_filter.Size = new System.Drawing.Size(890, 186);
             this.textBox_filter.TabIndex = 0;
             // 
             // btn_ok
@@ -74,27 +73,17 @@
             this.textBox_select.Size = new System.Drawing.Size(890, 176);
             this.textBox_select.TabIndex = 4;
             // 
-            // label_where
-            // 
-            this.label_where.AutoSize = true;
-            this.label_where.Location = new System.Drawing.Point(16, 192);
-            this.label_where.Name = "label_where";
-            this.label_where.Size = new System.Drawing.Size(59, 17);
-            this.label_where.TabIndex = 5;
-            this.label_where.Text = "WHERE";
-            // 
-            // FilterForm
+            // QueryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(914, 470);
-            this.Controls.Add(this.label_where);
             this.Controls.Add(this.textBox_select);
             this.Controls.Add(this.btn_cancel);
             this.Controls.Add(this.btn_ok);
             this.Controls.Add(this.textBox_filter);
-            this.Name = "FilterForm";
-            this.Text = "FilterForm";
+            this.Name = "QueryForm";
+            this.Text = "Query";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -106,6 +95,5 @@
         private System.Windows.Forms.Button btn_ok;
         private System.Windows.Forms.Button btn_cancel;
         private System.Windows.Forms.TextBox textBox_select;
-        private System.Windows.Forms.Label label_where;
     }
 }

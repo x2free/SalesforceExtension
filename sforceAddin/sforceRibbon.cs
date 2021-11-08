@@ -222,11 +222,27 @@ namespace sforceAddin
 
                 sb.Remove(sb.Length - 1, 1);
                 sb.AppendFormat(" FROM {0} ", tableName);
+
                 if (SForceClient.Instance.TableNameToFilterMap.ContainsKey(tableName) && !String.IsNullOrEmpty(SForceClient.Instance.TableNameToFilterMap[tableName]))
                 {
-                    sb.AppendFormat(" WHERE {0} ", SForceClient.Instance.TableNameToFilterMap[tableName]);
+                    String strFilter = SForceClient.Instance.TableNameToFilterMap[tableName];
+                    if (strFilter.StartsWith("WHERE", StringComparison.InvariantCultureIgnoreCase) || 
+                        strFilter.StartsWith("LIMIT", StringComparison.InvariantCultureIgnoreCase) || 
+                        strFilter.StartsWith("ORDER BY", StringComparison.InvariantCultureIgnoreCase) ||
+                        strFilter.StartsWith("GROUP BY", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        sb.Append(strFilter);
+                    }
+                    else
+                    {
+                        sb.AppendFormat(" WHERE {0}", strFilter);
+                    }
+
+                    //if (strFilter.IndexOf("ORDER BY", StringComparison.InvariantCultureIgnoreCase) < 0 && strFilter.IndexOf("LIMIT", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                    //{
+                    //    sb.Append(" ORDER BY Id ");
+                    //}
                 }
-                sb.Append(" ORDER BY Id ");
 
                 string queryStr = sb.ToString();
 
@@ -711,7 +727,7 @@ namespace sforceAddin
         }
 
         private UI.ConfigForm configForm;
-        private UI.FilterForm filterForm;
+        private UI.QueryForm queryForm;
         private void btn_Config_Click(object sender, RibbonControlEventArgs e)
         {
             if (configForm == null)
@@ -942,13 +958,13 @@ namespace sforceAddin
                 return;
             }
 
-            if (filterForm == null)
+            if (queryForm == null)
             {
-                filterForm = new UI.FilterForm();
-                filterForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-                filterForm.StartPosition = FormStartPosition.CenterParent;
-                filterForm.MaximizeBox = false;
-                filterForm.MaximizeBox = false;
+                queryForm = new UI.QueryForm();
+                queryForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                queryForm.StartPosition = FormStartPosition.CenterParent;
+                queryForm.MaximizeBox = false;
+                queryForm.MaximizeBox = false;
 
 
                 //filterForm.FilterChangedHandler = (strFilter) =>
@@ -960,7 +976,7 @@ namespace sforceAddin
                 //};
             }
 
-            filterForm.FilterChangedHandler = (strFilter) =>
+            queryForm.FilterChangedHandler = (strFilter) =>
             {
                 SForceClient.Instance.TableNameToFilterMap[tableName] = strFilter == null ? string.Empty : strFilter.Trim();
                 return true;
@@ -982,18 +998,18 @@ namespace sforceAddin
             sb.Remove(sb.Length - 2, 2);
             string selectStr = String.Format("SELECT {0} FROM {1}", sb.ToString(), tableName);
 
-            filterForm.SetSelect(selectStr);
+            queryForm.SetSelect(selectStr);
 
             if (SForceClient.Instance.TableNameToFilterMap.ContainsKey(tableName))
             {
-                filterForm.SetFilter(SForceClient.Instance.TableNameToFilterMap[tableName]);
+                queryForm.SetFilter(SForceClient.Instance.TableNameToFilterMap[tableName]);
             }
             else
             {
-                filterForm.SetFilter(string.Empty);
+                queryForm.SetFilter(string.Empty);
             }
 
-            filterForm.ShowDialog();
+            queryForm.ShowDialog();
         }
 
         //private bool filterChanged(string tableName, string strFilter)
